@@ -133,24 +133,33 @@ function check(btn, choice, correct, estilo) {
     const optionsParent = btn.parentElement;
     if (optionsParent.classList.contains('answered')) return;
     
-    const parent = btn.parentElement.closest('.q-container');
+    // Busca o container da questão (q-container)
+    const parent = btn.closest('.q-container'); 
     optionsParent.classList.add('answered');
     respondidasSimulado++;
     db.total_questoes++;
     
-   if (choice.toLowerCase() === correct.toLowerCase()) {
+    if (choice.toLowerCase() === correct.toLowerCase()) {
         btn.classList.add('correct');
         acertosSimulado++;
-        if(db.simuladoAtivo) db.simuladoAtivo.acertos++; // Salva no storage
+        if(db.simuladoAtivo) db.simuladoAtivo.acertos++;
         db.acertos++;
         db.xp += 10;
     } else {
         btn.classList.add('wrong');
         errosSimulado++;
-        if(db.simuladoAtivo) db.simuladoAtivo.erros++; // Salva no storage
+        if(db.simuladoAtivo) db.simuladoAtivo.erros++;
         if (estilo === 'CESPE') db.xp -= 5;
     }
-if(db.simuladoAtivo) db.simuladoAtivo.respondidas++;
+
+    // CORREÇÃO AQUI: Busca o comentário dentro do container da questão
+    const commentEl = parent.querySelector('.comentario');
+    if (commentEl) {
+        commentEl.classList.add('show-comment');
+        commentEl.style.display = 'block'; // Garante a visibilidade caso o CSS falhe
+    }
+    
+    if(db.simuladoAtivo) db.simuladoAtivo.respondidas++;
     
     updateScoreUI();
     saveDB();
