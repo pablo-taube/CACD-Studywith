@@ -23,22 +23,43 @@ let timerInterval = null;
 let seconds = 0;
 
 // --- 3. PROCESSAMENTO E RENDERIZAÇÃO ---
-function processQuestions() {
-    const raw = document.getElementById('raw-html').value;
+// Localize sua função processQuestions e substitua por esta:
+async function processQuestions() {
+    const temaSelecionado = document.getElementById('select-tema').value;
     const estilo = document.getElementById('set-estilo').value;
-    const materia = document.getElementById('set-materia').value || 'Geral';
-    
-    if (!raw) return alert("Cole o HTML das questões!");
+    const inputMateria = document.getElementById('set-materia').value;
+    let raw = "";
 
-    // ... lógica de colapso do painel ...
+    // Lógica Híbrida: Prioriza o arquivo, se não houver, usa o textarea
+    if (temaSelecionado) {
+        try {
+            const response = await fetch(`../banco-questoes/${temaSelecionado}`);
+            if (!response.ok) throw new Error();
+            raw = await response.text();
+        } catch (error) {
+            return alert("Erro ao carregar arquivo do banco de questões.");
+        }
+    } else {
+        raw = document.getElementById('raw-html').value;
+    }
+
+    if (!raw) return alert("Selecione um tema ou cole o HTML das questões!");
+
+    // Fecha o painel sanfonado
+    const panel = document.getElementById('config-panel');
+    if (panel && !panel.classList.contains('collapsed')) toggleConfig();
+
+    // Define o nome da matéria
+    const materia = inputMateria || (temaSelecionado ? temaSelecionado.replace('.html', '').toUpperCase() : "Geral");
 
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = raw;
+    
     questoesAtuais = tempDiv.querySelectorAll('.questao').length > 0
         ? Array.from(tempDiv.querySelectorAll('.questao')).map(n => n.outerHTML)
         : [raw];
 
-    // SALVAR ESTADO NO DB
+    // Persistência no LocalStorage (como configurado anteriormente)
     db.simuladoAtivo = {
         questoes: questoesAtuais,
         estilo: estilo,
@@ -49,12 +70,21 @@ function processQuestions() {
     };
     saveDB();
 
+    // Reseta visual e variáveis de controle
     acertosSimulado = 0;
     errosSimulado = 0;
     respondidasSimulado = 0;
 
     renderizarSimulado(estilo, materia);
-    // ... restante da função ...
+    updateScoreUI();
+    
+    document.getElementById('btn-reset-simulado').style.display = 'block';
+
+    // Timer
+    if (timerInterval) clearInterval(timerInterval);
+    seconds = 0;
+    timerInterval = null; 
+    toggleTimer();
 }
 
 function renderizarSimulado(estilo, materia) {

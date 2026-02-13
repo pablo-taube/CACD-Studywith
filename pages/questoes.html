@@ -47,17 +47,28 @@
                     <span id="accordion-icon" style="font-size: 12px;">▼</span>
                 </h2>
                 
-                <div id="config-content">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
-                        <select id="set-estilo" class="opt-btn" style="padding: 10px;">
-                            <option value="cespe">CESPE (C/E)</option>
-                            <option value="fgv">FGV (A-E)</option>
-                        </select>
-                        <input type="text" id="set-materia" placeholder="Disciplina" class="opt-btn" style="padding: 10px;">
-                    </div>
-                    <textarea id="raw-html" placeholder="Cole o HTML aqui..." style="height: 80px;"></textarea>
-                    <button onclick="processQuestions()" class="btn-primary" style="width: 100%; padding: 10px;">Gerar Simulado</button>
-                </div>
+               <div id="config-content">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+        <select id="set-estilo" class="opt-btn" style="padding: 10px;">
+            <option value="cespe">CESPE (C/E)</option>
+            <option value="fgv">FGV (A-E)</option>
+        </select>
+        <input type="text" id="set-materia" placeholder="Disciplina" class="opt-btn" style="padding: 10px;">
+    </div>
+
+    <div style="margin-top: 10px;">
+        <select id="select-tema" class="opt-btn" style="width: 100%; padding: 10px; border-color: var(--accent);">
+            <option value="">-- Utilizar banco de questões --</option>
+            <option value="geografia.html">Geografia</option>
+            <option value="constitucional.html">Direito Constitucional</option>
+            <option value="portugues.html">Língua Portuguesa</option>
+        </select>
+    </div>
+    
+    <textarea id="raw-html" placeholder="Ou cole o HTML das questões aqui..." style="height: 80px; margin-top: 10px;"></textarea>
+    
+    <button onclick="processQuestions()" class="btn-primary" style="width: 100%; padding: 10px; margin-top: 5px;">Gerar Simulado</button>
+</div>
             </div>
 
            <div id="simulado-score-box" class="card-score-compact">
