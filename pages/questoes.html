@@ -4,35 +4,44 @@
     <meta charset="UTF-8">
     <title>Diplomatique | Questões</title>
     <link rel="stylesheet" href="../style/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <aside class="sidebar">
-        <div class="logo">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="10" stroke="#25614D" stroke-width="4"/>
-            </svg>
-            Diplomatique
-        </div>
-        
-        <div class="menu-group">
-            <div class="menu-label">Menu</div>
-            <a href="../index.html" class="menu-item">📊 Dashboard</a>
-            <a href="revisao.html" class="menu-item">📘 Revisão</a>
-            <a href="flashcards.html" class="menu-item">🧠 Flashcards</a>
-            <a href="questoes.html" class="menu-item active">📝 Questões</a>
-        </div>
+    
+    
+<button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+    <span id="hamburger-icon">☰</span>
+</button>
 
-        <div class="menu-group" style="margin-top:auto">
-            <div class="menu-label">General</div>
-            <div class="menu-item">⚙️ Settings</div>
-            <div class="menu-item" onclick="clearData()">🧹 Resetar Banco</div>
-        </div>
-        
-        <button class="theme-switch" onclick="toggleTheme()" id="theme-toggle">
-            <span id="theme-text">Modo Escuro</span>
-            <div class="theme-icon" id="theme-icon">🌙</div>
-        </button>
-    </aside>
+<div class="sidebar-overlay" onclick="toggleMobileMenu()"></div>
+
+<aside class="sidebar" id="sidebar">
+    <div class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" stroke="#25614D" stroke-width="4"/>
+        </svg>
+        Diplomatique
+    </div>
+    
+    <div class="menu-group">
+        <div class="menu-label">Menu</div>
+        <a href="../index.html" class="menu-item">📊 Dashboard</a>
+        <a href="revisao.html" class="menu-item">📘 Revisão</a>
+        <a href="flashcards.html" class="menu-item">🧠 Flashcards</a>
+        <a href="questoes.html" class="menu-item active">📝 Questões</a>
+    </div>
+
+    <div class="menu-group" style="margin-top:auto">
+        <div class="menu-label">General</div>
+        <div class="menu-item">⚙️ Settings</div>
+        <div class="menu-item" onclick="clearData()" style="cursor:pointer">🧹 Resetar Banco</div>
+    </div>
+    
+    <button class="theme-switch" onclick="toggleTheme()" id="theme-toggle">
+        <span id="theme-text">Modo Escuro</span>
+        <div class="theme-icon" id="theme-icon">🌙</div>
+    </button>
+</aside>
 
     <main class="main-content">
         <header class="topbar">

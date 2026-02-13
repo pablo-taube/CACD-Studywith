@@ -291,3 +291,26 @@ function clearData() {
         location.reload();
     }
 }
+
+function toggleMobileMenu() {
+    const sidebar = document.getElementById('sidebar');
+    const icon = document.getElementById('hamburger-icon');
+    const isOpened = sidebar.classList.toggle('active');
+
+    // Troca o ícone entre hambúrguer e fechar (X)
+    if (isOpened) {
+        icon.innerText = '✕';
+    } else {
+        icon.innerText = '☰';
+    }
+}
+
+// Opcional: Fechar menu automaticamente ao clicar em um link (menu-item)
+document.querySelectorAll('.menu-item').forEach(item => {
+    item.addEventListener('click', () => {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar.classList.contains('active')) {
+            toggleMobileMenu();
+        }
+    });
+});

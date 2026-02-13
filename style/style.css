@@ -339,3 +339,173 @@ textarea {
 .show-comment {
     display: block !important;
 }
+
+/* --- ADAPTAÇÃO PARA CELULAR (Versão Mobile) --- */
+@media (max-width: 768px) {
+    body {
+        flex-direction: column; /* Sidebar em cima, conteúdo embaixo */
+        height: auto;
+        overflow-y: auto;
+        padding: 10px;
+    }
+
+    /* SIDEBAR MOBILE */
+    .sidebar {
+        width: 100%;
+        height: auto;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 20px;
+    }
+
+    .logo { 
+        margin-bottom: 20px; 
+        justify-content: center; 
+    }
+
+    .menu-group {
+        display: flex;
+        overflow-x: auto; /* Menu horizontal deslizante no mobile */
+        gap: 10px;
+        margin-bottom: 10px;
+        padding-bottom: 5px;
+    }
+
+    .menu-label { display: none; } /* Esconde labels para ganhar espaço */
+
+    .menu-item {
+        white-space: nowrap;
+        padding: 10px 15px;
+        font-size: 13px;
+    }
+
+    /* TOPBAR E BUSCA */
+    .topbar {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .search-bar {
+        width: 100%;
+    }
+
+    .user-info {
+        width: 100%;
+        justify-content: space-between;
+        background: var(--white);
+        padding: 10px;
+        border-radius: 15px;
+    }
+
+    /* ESTATÍSTICAS (Grid 2x2) */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .card { padding: 15px; }
+    .card h1 { font-size: 22px; }
+
+    /* LAYOUT DE QUESTÕES */
+    .questoes-header-grid {
+        grid-template-columns: 1fr; /* Um embaixo do outro */
+        gap: 15px;
+    }
+
+    .q-container {
+        width: 100%; /* Questão ocupa toda a largura disponível */
+        padding: 20px 15px;
+        border-radius: 18px;
+    }
+
+    .opt-btn {
+        padding: 14px;
+        font-size: 14px;
+    }
+
+    /* CRONÔMETRO (Compacto) */
+    .timer-widget {
+        width: 120px;
+        padding: 10px;
+        bottom: 15px;
+        right: 15px;
+        border-radius: 18px;
+    }
+
+    .timer-clock { font-size: 18px; }
+    .timer-widget button { padding: 5px; font-size: 12px; }
+
+    /* BOTÃO PRIMÁRIO */
+    .btn-primary {
+        padding: 12px;
+        font-size: 15px;
+    }
+}
+
+/* Ajuste para celulares muito pequenos */
+@media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: 1fr; /* Uma coluna apenas */
+    }
+    
+    .score-main-val { font-size: 24px; }
+}
+
+/* BOTÃO HAMBÚRGUER */
+.mobile-menu-toggle {
+    display: none; /* Escondido no Desktop */
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1001;
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* OVERLAY ESCURO */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+    backdrop-filter: blur(2px);
+}
+
+/* --- MEDIA QUERY MOBILE --- */
+@media (max-width: 768px) {
+    .mobile-menu-toggle { display: block; }
+
+    .sidebar {
+        position: fixed;
+        left: -280px; /* Esconde para a esquerda */
+        top: 0;
+        bottom: 0;
+        z-index: 1000;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 0 24px 24px 0;
+    }
+
+    /* Classe ativada via JS */
+    .sidebar.active {
+        left: 0;
+    }
+
+    .sidebar.active + .sidebar-overlay {
+        display: block;
+    }
+
+    .main-content {
+        padding-top: 80px; /* Abre espaço para o botão no topo */
+    }
+}
