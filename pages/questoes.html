@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Donezo | Questões</title>
+    <link rel="stylesheet" href="../style/style.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="#25614D" stroke-width="4"/>
+            </svg>
+            Donezo
+        </div>
+        
+        <div class="menu-group">
+            <div class="menu-label">Menu</div>
+            <a href="../index.html" class="menu-item">📊 Dashboard</a>
+            <a href="revisao.html" class="menu-item">📘 Revisão</a>
+            <a href="flashcards.html" class="menu-item">🧠 Flashcards</a>
+            <a href="questoes.html" class="menu-item active">📝 Questões</a>
+        </div>
+
+        <div class="menu-group" style="margin-top:auto">
+            <div class="menu-label">General</div>
+            <div class="menu-item">⚙️ Settings</div>
+            <div class="menu-item" onclick="clearData()">🧹 Resetar Banco</div>
+        </div>
+        
+        <button class="theme-switch" onclick="toggleTheme()" id="theme-toggle">
+            <span id="theme-text">Modo Escuro</span>
+            <div class="theme-icon" id="theme-icon">🌙</div>
+        </button>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            </header>
+
+        <h1 style="margin-bottom: 20px;">Simulado Inteligente</h1>
+
+        <div class="questoes-header-grid">
+            <div class="config-panel collapsed" id="config-panel">
+                <h2 onclick="toggleConfig()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 18px;">
+                    Configurar Simulado 
+                    <span id="accordion-icon" style="font-size: 12px;">▼</span>
+                </h2>
+                
+                <div id="config-content">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                        <select id="set-estilo" class="opt-btn" style="padding: 10px;">
+                            <option value="cespe">CESPE (C/E)</option>
+                            <option value="fgv">FGV (A-E)</option>
+                        </select>
+                        <input type="text" id="set-materia" placeholder="Disciplina" class="opt-btn" style="padding: 10px;">
+                    </div>
+                    <textarea id="raw-html" placeholder="Cole o HTML aqui..." style="height: 80px;"></textarea>
+                    <button onclick="processQuestions()" class="btn-primary" style="width: 100%; padding: 10px;">Gerar Simulado</button>
+                </div>
+            </div>
+
+           <div id="simulado-score-box" class="card-score-compact">
+    <div class="score-data">
+        <div class="score-main-val">
+            <span id="score-acertos">0</span>
+            <small>/ <span id="score-total-q">0</span></small>
+        </div>
+        
+        <div class="score-divider"></div>
+
+        <div class="score-details">
+            <p>Erros registrados</p>
+            <span id="score-erros">0</span>
+            <button id="btn-reset-simulado" onclick="resetSimulado()" class="btn-mini-reset" style="display:none;">
+                Resetar Simulado
+            </button>
+        </div>
+    </div>
+</div>
+        </div>
+
+        <div id="questions-render" class="questoes-lista-total"></div>
+    </main>
+
+    <div class="timer-widget">
+        <p>TEMPO DE PROVA</p>
+        <div class="timer-clock" id="clock">00:00:00</div>
+        <div style="display: flex; gap: 5px; justify-content: center;">
+            <button onclick="toggleTimer()" id="btn-timer">Iniciar</button>
+            <button onclick="resetTimer()" style="background: #444;">Reset</button>
+        </div>
+    </div>
+
+    <script src="../js/script.js"></script>
+</body>
+</html>

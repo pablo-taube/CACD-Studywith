@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Donezo | Revisão</title>
+    <link rel="stylesheet" href="../style/style.css">
+</head>
+<body>
+    <aside class="sidebar">
+    <div class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" stroke="#25614D" stroke-width="4"/>
+        </svg>
+        Donezo
+    </div>
+    
+    <div class="menu-group">
+        <div class="menu-label">Menu</div>
+        <a href="../index.html" class="menu-item active">📊 Dashboard</a>
+        <a href="revisao.html" class="menu-item">📘 Revisão</a>
+        <a href="flashcards.html" class="menu-item">🧠 Flashcards</a>
+        <a href="questoes.html" class="menu-item">📝 Questões</a>
+    </div>
+
+    <div class="menu-group" style="margin-top:auto">
+        <div class="menu-label">General</div>
+        <div class="menu-item">⚙️ Settings</div>
+        <div class="menu-item" onclick="clearData()">🧹 Resetar Banco</div>
+    </div>
+    <button class="theme-switch" onclick="toggleTheme()" id="theme-toggle">
+    <span id="theme-text">Modo Escuro</span>
+    <div class="theme-icon" id="theme-icon">🌙</div>
+</button>
+</aside>
+    <main class="main-content">
+        <header class="topbar">
+            <div class="search-bar">
+                <input type="text" placeholder="Pesquisar tarefas ou métricas... (⌘F)">
+            </div>
+            <div class="user-info">
+                <div class="user-text">
+                    <p class="user-name">Michael Scott</p>
+                    <p class="user-plan">Premium Plan</p>
+                </div>
+                <img src="https://ui-avatars.com/api/?name=Michael+Scott&background=25614D&color=fff" class="avatar">
+            </div>
+        </header>
+        <h1>Área de Revisão</h1>
+        <div class="config-panel">
+            <textarea id="revisao-input" placeholder="Cole seu HTML de revisão aqui..."></textarea>
+            <button class="btn-primary" onclick="renderGeneric('revisao-input', 'revisao-out')">Renderizar Conteúdo</button>
+        </div>
+        <div id="revisao-out" class="q-container"></div>
+        
+    </main>
+    <script src="../js/script.js"></script>
+</body>
+</html>
