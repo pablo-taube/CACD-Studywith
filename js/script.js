@@ -23,14 +23,13 @@ let timerInterval = null;
 let seconds = 0;
 
 // --- 3. PROCESSAMENTO E RENDERIZAÇÃO ---
-// Localize sua função processQuestions e substitua por esta:
 async function processQuestions() {
     const temaSelecionado = document.getElementById('select-tema').value;
     const estilo = document.getElementById('set-estilo').value;
     const inputMateria = document.getElementById('set-materia').value;
+    const limite = parseInt(document.getElementById('set-limite').value); // CAPTURA O LIMITE
     let raw = "";
 
-    // Lógica Híbrida: Prioriza o arquivo, se não houver, usa o textarea
     if (temaSelecionado) {
         try {
             const response = await fetch(`../banco-questoes/${temaSelecionado}`);
@@ -45,21 +44,28 @@ async function processQuestions() {
 
     if (!raw) return alert("Selecione um tema ou cole o HTML das questões!");
 
-    // Fecha o painel sanfonado
     const panel = document.getElementById('config-panel');
     if (panel && !panel.classList.contains('collapsed')) toggleConfig();
 
-    // Define o nome da matéria
     const materia = inputMateria || (temaSelecionado ? temaSelecionado.replace('.html', '').toUpperCase() : "Geral");
 
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = raw;
     
-    questoesAtuais = tempDiv.querySelectorAll('.questao').length > 0
-        ? Array.from(tempDiv.querySelectorAll('.questao')).map(n => n.outerHTML)
-        : [raw];
+    // 1. Pega todas as questões encontradas
+    let todasAsQuestoes = Array.from(tempDiv.querySelectorAll('.questao')).map(n => n.outerHTML);
+    if (todasAsQuestoes.length === 0) todasAsQuestoes = [raw];
 
-    // Persistência no LocalStorage (como configurado anteriormente)
+    // 2. EMBARALHA ANTES DE FILTRAR (para não pegar sempre as mesmas do topo)
+    todasAsQuestoes.sort(() => Math.random() - 0.5);
+
+    // 3. APLICA O FILTRO DE QUANTIDADE
+    if (limite > 0) {
+        questoesAtuais = todasAsQuestoes.slice(0, limite);
+    } else {
+        questoesAtuais = todasAsQuestoes;
+    }
+
     db.simuladoAtivo = {
         questoes: questoesAtuais,
         estilo: estilo,
@@ -70,7 +76,6 @@ async function processQuestions() {
     };
     saveDB();
 
-    // Reseta visual e variáveis de controle
     acertosSimulado = 0;
     errosSimulado = 0;
     respondidasSimulado = 0;
@@ -80,7 +85,6 @@ async function processQuestions() {
     
     document.getElementById('btn-reset-simulado').style.display = 'block';
 
-    // Timer
     if (timerInterval) clearInterval(timerInterval);
     seconds = 0;
     timerInterval = null; 
