@@ -279,16 +279,17 @@ window.onload = () => {
     document.documentElement.setAttribute('data-theme', savedTheme);
     updateThemeUI(savedTheme);
 
-    // RECUPERAR SIMULADO ATIVO
+    // RECUPERAR DADOS DO SIMULADO (Sem renderizar questões automaticamente)
     if (db.simuladoAtivo && document.getElementById('questions-render')) {
         questoesAtuais = db.simuladoAtivo.questoes;
         acertosSimulado = db.simuladoAtivo.acertos;
         errosSimulado = db.simuladoAtivo.erros;
         respondidasSimulado = db.simuladoAtivo.respondidas;
         
-        renderizarSimulado(db.simuladoAtivo.estilo, db.simuladoAtivo.materia);
+        // Atualiza apenas a interface de pontos
         updateScoreUI();
         
+        // Mostra o botão de reset caso já exista um progresso
         const btnReset = document.getElementById('btn-reset-simulado');
         if (btnReset) btnReset.style.display = 'block';
     }
