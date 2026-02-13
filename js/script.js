@@ -292,16 +292,20 @@ function clearData() {
     }
 }
 
+
 function toggleMobileMenu() {
     const sidebar = document.getElementById('sidebar');
     const icon = document.getElementById('hamburger-icon');
     const isOpened = sidebar.classList.toggle('active');
 
-    // Troca o ícone entre hambúrguer e fechar (X)
+    // Troca o ícone
+    icon.innerText = isOpened ? '✕' : '☰';
+
+    // Impede a rolagem do fundo para focar no menu
     if (isOpened) {
-        icon.innerText = '✕';
+        document.body.style.overflow = 'hidden';
     } else {
-        icon.innerText = '☰';
+        document.body.style.overflow = 'auto';
     }
 }
 

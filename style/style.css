@@ -482,30 +482,103 @@ textarea {
     backdrop-filter: blur(2px);
 }
 
-/* --- MEDIA QUERY MOBILE --- */
+/* SUBSTITUIR/ADICIONAR AO FINAL DO CSS */
+/* --- AJUSTE PARA MENU CENTRALIZADO E VERTICAL NO MOBILE --- */
 @media (max-width: 768px) {
-    .mobile-menu-toggle { display: block; }
-
-    .sidebar {
+    .mobile-menu-toggle {
+        display: block;
         position: fixed;
-        left: -280px; /* Esconde para a esquerda */
-        top: 0;
-        bottom: 0;
-        z-index: 1000;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        border-radius: 0 24px 24px 0;
+        top: 20px;
+        left: 20px;
+        z-index: 1100;
+        background: var(--primary-gradient);
+        color: white;
+        border: none;
+        width: 45px;
+        height: 45px;
+        border-radius: 12px;
+        font-size: 24px;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
 
-    /* Classe ativada via JS */
+    /* MENU COMO MODAL CENTRALIZADO */
+    .sidebar {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -150%); /* Começa escondido acima */
+        width: 90%;
+        max-width: 340px;
+        height: auto;
+        max-height: 85vh; /* Garante que não ultrapasse a altura da tela */
+        z-index: 1000;
+        background: var(--sidebar-bg);
+        border-radius: 30px;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+        transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+        display: flex;
+        flex-direction: column; /* Força tudo a ser vertical */
+        padding: 40px 20px;
+        opacity: 0;
+        visibility: hidden;
+        overflow-y: auto; /* Permite rolar o menu se houver muitos itens */
+    }
+
     .sidebar.active {
+        transform: translate(-50%, -50%); /* Centraliza perfeitamente */
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* FORÇAR LISTA VERTICAL NO GRUPO DE MENU */
+    .menu-group {
+        display: flex;
+        flex-direction: column; /* Itens um embaixo do outro */
+        align-items: stretch; /* Faz os botões ocuparem a mesma largura */
+        width: 100%;
+        margin-bottom: 25px;
+    }
+
+    .menu-label {
+        display: block !important; /* Garante que o label apareça */
+        text-align: center;
+        margin-bottom: 15px;
+        font-size: 12px;
+        letter-spacing: 2px;
+    }
+
+    .menu-item {
+        display: flex;
+        justify-content: center; /* Centraliza conteúdo do botão */
+        align-items: center;
+        padding: 16px;
+        font-size: 16px;
+        width: 100%;
+        margin-bottom: 10px; /* Espaço entre botões verticais */
+        border-radius: 15px;
+        text-align: center;
+    }
+
+    /* OVERLAY COM BLUR */
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
         left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(8px);
+        z-index: 999;
     }
 
     .sidebar.active + .sidebar-overlay {
         display: block;
     }
 
+    /* AJUSTE DE CONTEÚDO PARA NÃO FICAR SOB O BOTÃO */
     .main-content {
-        padding-top: 80px; /* Abre espaço para o botão no topo */
+        padding-top: 85px;
     }
 }
