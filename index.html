@@ -2,56 +2,78 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Diplomatique Study AI | Dashboard</title>
+    <title>Donezo | Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./style/style.css">
+    <link rel="stylesheet" href="style/style.css"> 
 </head>
 <body>
     <aside class="sidebar">
-    <div class="logo">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="10" stroke="#25614D" stroke-width="4"/>
-        </svg>
-        Donezo
-    </div>
-    
-    <div class="menu-group">
-        <div class="menu-label">Menu</div>
-        <a href="index.html" class="menu-item active">📊 Dashboard</a>
-        <a href="./pages/revisao.html" class="menu-item">📘 Revisão</a>
-        <a href="./pages/flashcards.html" class="menu-item">🧠 Flashcards</a>
-        <a href="./pages/questoes.html" class="menu-item">📝 Questões</a>
-    </div>
+        <div class="logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="#25614D" stroke-width="4"/>
+            </svg>
+            Diplomatique
+        </div>
+        
+        <div class="menu-group">
+            <div class="menu-label">Menu</div>
+            <a href="index.html" class="menu-item active">📊 Dashboard</a>
+            <a href="./pages/revisao.html" class="menu-item">📘 Revisão</a>
+            <a href="./pages/flashcards.html" class="menu-item">🧠 Flashcards</a>
+            <a href="./pages/questoes.html" class="menu-item">📝 Questões</a>
+        </div>
 
-    <div class="menu-group" style="margin-top:auto">
-        <div class="menu-label">General</div>
-        <div class="menu-item">⚙️ Settings</div>
-        <div class="menu-item" onclick="clearData()">🧹 Resetar Banco</div>
-    </div>
+        <div class="menu-group" style="margin-top:auto">
+            <div class="menu-label">General</div>
+            <div class="menu-item">⚙️ Settings</div>
+            <div class="menu-item" onclick="clearData()" style="cursor:pointer">🧹 Resetar Banco</div>
+        </div>
 
-    <button class="theme-switch" onclick="toggleTheme()" id="theme-toggle">
-    <span id="theme-text">Modo Escuro</span>
-    <div class="theme-icon" id="theme-icon">🌙</div>
-</button>
-</aside>
+        <button class="theme-switch" onclick="toggleTheme()" id="theme-toggle">
+            <span id="theme-text">Modo Escuro</span>
+            <div class="theme-icon" id="theme-icon">🌙</div>
+        </button>
+    </aside>
 
     <main class="main-content">
         <header class="topbar">
-            <div class="search-bar"><input type="text" placeholder="Pesquisar métricas..."></div>
+            <div class="search-bar">
+                <input type="text" placeholder="Pesquisar métricas...">
+            </div>
+            
             <div class="user-info">
-                <p><strong>Pablo</strong><br><small>No Plan</small></p>
-                <img src="https://i.pravatar.cc/150?u=michael" class="avatar">
+                <div class="user-text" style="text-align: right;">
+                    <p style="font-weight: 700; font-size: 14px; margin: 0;">Pablo</p>
+                    <p style="font-size: 11px; color: var(--text-muted); margin: 0;">No Plan</p>
+                </div>
+                <img src="https://ui-avatars.com/api/?name=Pablo&background=25614D&color=fff" class="avatar">
             </div>
         </header>
 
-        <h1>Visão Geral</h1>
+        <h1 style="margin-bottom: 24px;">Visão Geral</h1>
+        
         <div class="stats-grid">
-            <div class="card featured"><h3>Total Questões</h3><h1 id="stat-total-q">0</h1></div>
-            <div class="card"><h3>Acertos</h3><h1 id="stat-accuracy">0%</h1></div>
-            <div class="card"><h3>Flashcards</h3><h1 id="stat-flash">0</h1></div>
-            <div class="card"><h3>Pontos XP</h3><h1 id="stat-xp">0</h1></div>
+            <div class="card featured">
+                <h3>Total Questões</h3>
+                <h1 id="stat-total-q">0</h1>
+            </div>
+            <div class="card">
+                <h3>Acertos</h3>
+                <h1 id="stat-accuracy">0%</h1>
+            </div>
+            <div class="card">
+                <h3>Flashcards</h3>
+                <h1 id="stat-flash">0</h1>
+            </div>
+            <div class="card">
+                <h3>Pontos XP</h3>
+                <h1 id="stat-xp">0</h1>
+            </div>
         </div>
     </main>
+
     <script src="./js/script.js"></script>
 </body>
 </html>
