@@ -1,10 +1,12 @@
 // --- 1. BANCO DE DADOS LOCAL ---
+// Altere a inicialização do db para incluir 'simuladoAtivo'
 let db = JSON.parse(localStorage.getItem('donezo_db')) || {
     total_questoes: 0,
     acertos: 0,
     flashcards: 0,
     xp: 0,
-    materias: {}
+    materias: {},
+    simuladoAtivo: null // Novo campo para salvar o estado atual
 };
 
 function saveDB() {
@@ -28,16 +30,7 @@ function processQuestions() {
     
     if (!raw) return alert("Cole o HTML das questões!");
 
-    // Minimiza o painel
-    const panel = document.getElementById('config-panel');
-    if (panel && !panel.classList.contains('collapsed')) {
-        toggleConfig();
-    }
-
-    // Reseta estatísticas do simulado atual
-    acertosSimulado = 0;
-    errosSimulado = 0;
-    respondidasSimulado = 0;
+    // ... lógica de colapso do painel ...
 
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = raw;
@@ -45,17 +38,23 @@ function processQuestions() {
         ? Array.from(tempDiv.querySelectorAll('.questao')).map(n => n.outerHTML)
         : [raw];
 
-    const btnReset = document.getElementById('btn-reset-simulado');
-    if (btnReset) btnReset.style.display = 'block';
+    // SALVAR ESTADO NO DB
+    db.simuladoAtivo = {
+        questoes: questoesAtuais,
+        estilo: estilo,
+        materia: materia,
+        acertos: 0,
+        erros: 0,
+        respondidas: 0
+    };
+    saveDB();
 
-    updateScoreUI();
+    acertosSimulado = 0;
+    errosSimulado = 0;
+    respondidasSimulado = 0;
+
     renderizarSimulado(estilo, materia);
-
-    // Inicia Cronômetro automaticamente
-    if (timerInterval) clearInterval(timerInterval);
-    seconds = 0;
-    timerInterval = null; 
-    toggleTimer();
+    // ... restante da função ...
 }
 
 function renderizarSimulado(estilo, materia) {
@@ -105,19 +104,19 @@ function check(btn, choice, correct, estilo) {
     respondidasSimulado++;
     db.total_questoes++;
     
-    if (choice.toLowerCase() === correct.toLowerCase()) {
+   if (choice.toLowerCase() === correct.toLowerCase()) {
         btn.classList.add('correct');
         acertosSimulado++;
+        if(db.simuladoAtivo) db.simuladoAtivo.acertos++; // Salva no storage
         db.acertos++;
         db.xp += 10;
     } else {
         btn.classList.add('wrong');
-        errosSimulado++; // INCREMENTO DO ERRO
+        errosSimulado++;
+        if(db.simuladoAtivo) db.simuladoAtivo.erros++; // Salva no storage
         if (estilo === 'CESPE') db.xp -= 5;
     }
-
-    const commentEl = parent.querySelector('.comentario');
-    if (commentEl) commentEl.classList.add('show-comment');
+if(db.simuladoAtivo) db.simuladoAtivo.respondidas++;
     
     updateScoreUI();
     saveDB();
@@ -231,9 +230,25 @@ function highlightActiveMenu() {
 window.onload = () => {
     highlightActiveMenu();
     updateDashboard();
+    
+    // Recupera o tema
     const savedTheme = localStorage.getItem('donezo_theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
     updateThemeUI(savedTheme);
+
+    // RECUPERAR SIMULADO ATIVO
+    if (db.simuladoAtivo && document.getElementById('questions-render')) {
+        questoesAtuais = db.simuladoAtivo.questoes;
+        acertosSimulado = db.simuladoAtivo.acertos;
+        errosSimulado = db.simuladoAtivo.erros;
+        respondidasSimulado = db.simuladoAtivo.respondidas;
+        
+        renderizarSimulado(db.simuladoAtivo.estilo, db.simuladoAtivo.materia);
+        updateScoreUI();
+        
+        const btnReset = document.getElementById('btn-reset-simulado');
+        if (btnReset) btnReset.style.display = 'block';
+    }
 };
 
 function clearData() {
