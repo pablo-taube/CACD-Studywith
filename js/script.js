@@ -15,9 +15,10 @@ async function initializeApp() {
     
     if (session) {
         console.log("Usuário logado:", session.user.email);
-        await fetchRemoteDB(); // Sincroniza dados da nuvem IMEDIATAMENTE
+        await fetchRemoteDB(); 
     } else {
-        toggleAuthModal(); // Abre o login se não houver sessão
+        updateSyncUI('offline'); // Garante estado offline se não houver sessão
+        toggleAuthModal(); 
     }
     
     updateDashboard();
@@ -26,7 +27,61 @@ async function initializeApp() {
 
 window.onload = initializeApp;
 
+// --- FUNÇÃO AUXILIAR PARA O STATUS VISUAL ---
+function updateSyncUI(status) {
+    const indicator = document.getElementById('sync-indicator');
+    const icon = document.getElementById('sync-icon');
+    const text = document.getElementById('sync-text');
+    if (!indicator) return;
+
+    if (status === 'syncing') {
+        indicator.className = 'sync-status syncing';
+        if (icon) icon.innerText = '🔄';
+        if (text) text.innerText = 'Sincronizando...';
+    } else if (status === 'synced') {
+        indicator.className = 'sync-status synced';
+        if (icon) icon.innerText = '☁️';
+        if (text) text.innerText = 'Nuvem Atualizada';
+    } else {
+        indicator.className = 'sync-status offline';
+        if (icon) icon.innerText = '☁️';
+        if (text) text.innerText = 'Offline';
+    }
+}
+
+// --- BANCO DE DADOS ATUALIZADO ---
+async function saveDB() {
+    // Salva localmente primeiro
+    localStorage.setItem('donezo_db', JSON.stringify(db));
+    if (typeof updateDashboard === "function") updateDashboard();
+
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) {
+        updateSyncUI('syncing');
+        try {
+            const { error } = await supabaseClient
+                .from('user_progress')
+                .upsert({ 
+                    id: session.user.id, 
+                    data_json: db, 
+                    updated_at: new Date() 
+                });
+            
+            if (!error) {
+                // Mantém o status de "sucesso" por 1.5s antes de estabilizar
+                setTimeout(() => updateSyncUI('synced'), 500);
+            } else {
+                throw error;
+            }
+        } catch (err) {
+            console.error("Erro ao sincronizar:", err);
+            updateSyncUI('offline');
+        }
+    }
+}
+
 async function fetchRemoteDB() {
+    updateSyncUI('syncing');
     try {
         const { data, error } = await supabaseClient
             .from('user_progress')
@@ -34,13 +89,16 @@ async function fetchRemoteDB() {
             .single();
         
         if (data && data.data_json) {
-            // Lógica de merge: prevalece o que tiver mais progresso ou for mais recente
             db = data.data_json;
             localStorage.setItem('donezo_db', JSON.stringify(db));
-            updateDashboard();
+            if (typeof updateDashboard === "function") updateDashboard();
+            updateSyncUI('synced');
+        } else {
+            updateSyncUI('offline');
         }
     } catch (err) {
-        console.log("Ainda não há dados na nuvem para este usuário.");
+        console.log("Sem dados na nuvem.");
+        updateSyncUI('offline');
     }
 }
 

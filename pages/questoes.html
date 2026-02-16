@@ -35,11 +35,12 @@
 
     <aside class="sidebar" id="sidebar">
         <div class="logo">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="10" stroke="#25614D" stroke-width="4"/>
-            </svg>
-            Diplomatique
-        </div>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" stroke="#25614D" stroke-width="4"/>
+        </svg>
+        Diplomatique
+    </div>
+
         <div class="menu-group">
             <div class="menu-label">Menu</div>
             <a href="../index.html" class="menu-item">📊 Dashboard</a>
@@ -52,6 +53,10 @@
             <div class="menu-item" onclick="supabaseClient.auth.signOut().then(() => location.reload())">🚪 Sair da Conta</div>
             <div class="menu-item" onclick="clearData()">🧹 Resetar Banco</div>
         </div>
+        <div id="sync-indicator" class="sync-status offline" style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; margin: -20px 0 20px 0; font-size: 11px; border-radius: 8px;">
+        <span id="sync-icon">☁️</span>
+        <span id="sync-text">Offline</span>
+    </div>
         <button class="theme-switch" onclick="toggleTheme()" id="theme-toggle">
             <span id="theme-text">Modo Escuro</span>
             <div class="theme-icon" id="theme-icon">🌙</div>
