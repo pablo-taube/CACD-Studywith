@@ -342,103 +342,33 @@ textarea {
 
 /* --- ADAPTAÇÃO PARA CELULAR (Versão Mobile) --- */
 @media (max-width: 768px) {
-    body {
-        flex-direction: column; /* Sidebar em cima, conteúdo embaixo */
-        height: auto;
-        overflow-y: auto;
-        padding: 10px;
+    /* Garante que o botão hambúrguer sempre vença qualquer overlay */
+    .mobile-menu-toggle {
+        display: block;
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 3000 !important; 
+        background: var(--primary-gradient);
+        color: white;
+        border-radius: 12px;
+        width: 48px;
+        height: 48px;
     }
 
-    /* SIDEBAR MOBILE */
     .sidebar {
-        width: 100%;
-        height: auto;
-        padding: 15px;
-        margin-bottom: 20px;
-        border-radius: 20px;
+        z-index: 2500; /* Sidebar acima do overlay, abaixo do botão */
     }
 
-    .logo { 
-        margin-bottom: 20px; 
-        justify-content: center; 
+    .sidebar-overlay {
+        z-index: 2400; /* Abaixo da sidebar */
+        backdrop-filter: blur(10px); /* Aumentado para melhor legibilidade no celular */
     }
 
-    .menu-group {
-        display: flex;
-        overflow-x: auto; /* Menu horizontal deslizante no mobile */
-        gap: 10px;
-        margin-bottom: 10px;
-        padding-bottom: 5px;
-    }
-
-    .menu-label { display: none; } /* Esconde labels para ganhar espaço */
-
-    .menu-item {
-        white-space: nowrap;
-        padding: 10px 15px;
-        font-size: 13px;
-    }
-
-    /* TOPBAR E BUSCA */
-    .topbar {
-        flex-direction: column;
-        gap: 15px;
-    }
-
-    .search-bar {
-        width: 100%;
-    }
-
-    .user-info {
-        width: 100%;
-        justify-content: space-between;
-        background: var(--white);
-        padding: 10px;
-        border-radius: 15px;
-    }
-
-    /* ESTATÍSTICAS (Grid 2x2) */
+    /* Ajuste para os cards de estatísticas não quebrarem em telas muito finas */
     .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-    }
-
-    .card { padding: 15px; }
-    .card h1 { font-size: 22px; }
-
-    /* LAYOUT DE QUESTÕES */
-    .questoes-header-grid {
-        grid-template-columns: 1fr; /* Um embaixo do outro */
-        gap: 15px;
-    }
-
-    .q-container {
-        width: 100%; /* Questão ocupa toda a largura disponível */
-        padding: 20px 15px;
-        border-radius: 18px;
-    }
-
-    .opt-btn {
-        padding: 14px;
-        font-size: 14px;
-    }
-
-    /* CRONÔMETRO (Compacto) */
-    .timer-widget {
-        width: 120px;
-        padding: 10px;
-        bottom: 15px;
-        right: 15px;
-        border-radius: 18px;
-    }
-
-    .timer-clock { font-size: 18px; }
-    .timer-widget button { padding: 5px; font-size: 12px; }
-
-    /* BOTÃO PRIMÁRIO */
-    .btn-primary {
-        padding: 12px;
-        font-size: 15px;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
     }
 }
 

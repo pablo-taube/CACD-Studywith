@@ -1,31 +1,46 @@
 // --- CONFIGURAÇÃO SUPABASE ---
 const SUPABASE_URL = 'https://ozhtjngfedtslwgeafyv.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96aHRqbmdmZWR0c2x3Z2VhZnl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyNTg0MzYsImV4cCI6MjA4NjgzNDQzNn0.SrI2KQ-01iaVKJjESJF8-Ig6ZVrUpT5T_F9yIA554OQ'; 
+const SUPABASE_KEY = 'sb_publishable_nP-XLqixj7YPWh1AoDFfAQ_JHQSlRF-'; 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // --- 1. BANCO DE DADOS LOCAL E NUVEM ---
-let db = JSON.parse(localStorage.getItem('donezo_db')) || {
-    total_questoes: 0, acertos: 0, flashcards: 0, xp: 0, materias: {}, simuladoAtivo: null
-};
+let db = { total_questoes: 0, acertos: 0, flashcards: 0, xp: 0, materias: {}, simuladoAtivo: null };
 
-async function saveDB() {
-    localStorage.setItem('donezo_db', JSON.stringify(db));
-    updateDashboard();
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (user) {
-        await supabaseClient.from('user_progress').upsert({ id: user.id, data_json: db, updated_at: new Date() });
+// Função unificada de inicialização
+async function initializeApp() {
+    const localData = localStorage.getItem('donezo_db');
+    if (localData) db = JSON.parse(localData);
+
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    
+    if (session) {
+        console.log("Usuário logado:", session.user.email);
+        await fetchRemoteDB(); // Sincroniza dados da nuvem IMEDIATAMENTE
+    } else {
+        toggleAuthModal(); // Abre o login se não houver sessão
     }
+    
+    updateDashboard();
+    highlightActiveMenu();
 }
 
+window.onload = initializeApp;
+
 async function fetchRemoteDB() {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (user) {
-        let { data } = await supabaseClient.from('user_progress').select('data_json').single();
-        if (data) {
+    try {
+        const { data, error } = await supabaseClient
+            .from('user_progress')
+            .select('data_json')
+            .single();
+        
+        if (data && data.data_json) {
+            // Lógica de merge: prevalece o que tiver mais progresso ou for mais recente
             db = data.data_json;
             localStorage.setItem('donezo_db', JSON.stringify(db));
             updateDashboard();
         }
+    } catch (err) {
+        console.log("Ainda não há dados na nuvem para este usuário.");
     }
 }
 
@@ -129,21 +144,40 @@ function toggleAuthMode() {
 }
 
 async function handleAuth() {
-    const email = document.getElementById('auth-email').value;
+    const email = document.getElementById('auth-email').value.trim();
     const password = document.getElementById('auth-password').value;
-    if (isSignUp) await supabaseClient.auth.signUp({ email, password });
-    else {
-        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        if (!error) { await fetchRemoteDB(); location.reload(); }
+    const btnMain = document.getElementById('auth-btn-main');
+
+    if (!email || !password) return alert("Preencha todos os campos!");
+    
+    btnMain.innerText = "Processando...";
+    btnMain.disabled = true;
+
+    try {
+        let result;
+        if (isSignUp) {
+            result = await supabaseClient.auth.signUp({ email, password });
+        } else {
+            result = await supabaseClient.auth.signInWithPassword({ email, password });
+        }
+
+        if (result.error) throw result.error;
+
+        if (result.data.user && result.data.session) {
+            alert(isSignUp ? "Conta criada com sucesso!" : "Bem-vindo de volta!");
+            await fetchRemoteDB();
+            closeAuthModal();
+            // Pequeno delay antes do reload para garantir escrita no storage
+            setTimeout(() => location.reload(), 500);
+        } else if (isSignUp) {
+            alert("Verifique seu e-mail para confirmar o cadastro!");
+        }
+
+    } catch (error) {
+        alert("Erro: " + error.message);
+        console.error("Erro Supabase:", error);
+    } finally {
+        btnMain.disabled = false;
+        btnMain.innerText = isSignUp ? 'Cadastrar' : 'Entrar';
     }
 }
-
-window.onload = async () => {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) toggleAuthModal(); else await fetchRemoteDB();
-    
-    const savedTheme = localStorage.getItem('donezo_theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-};
-
-// ... Funções de Timer e Dashboard permanecem as mesmas das versões anteriores ...
