@@ -94,32 +94,93 @@ let errosSimulado = 0;
 let questoesAtuais = [];
 
 async function processQuestions() {
-    const materia = document.getElementById('select-tema').value;
+    const materia = document.getElementById('select-materia').value;
+    const assunto = document.getElementById('set-assunto').value.trim();
     const estilo = document.getElementById('set-estilo').value;
     const limite = parseInt(document.getElementById('set-limite').value) || 10;
 
-    // Busca questões diretamente da tabela 'questoes' do Supabase
-    const { data, error } = await supabaseClient
-        .from('questoes')
-        .select('*')
-        .eq('materia', materia.replace('.html', '')); // Ajuste caso o value do select ainda tenha .html
+    if (!materia && !assunto) return alert("Selecione ao menos uma matéria ou assunto!");
 
-    if (error || !data.length) return alert("Não foram encontradas questões para este tema no banco de dados.");
+    updateSyncUI('syncing');
 
-    // Embaralha e aplica o limite
-    let todas = data;
-    todas.sort(() => Math.random() - 0.5);
-    questoesAtuais = todas.slice(0, limite);
+    try {
+        let query = supabaseClient.from('questoes').select('*');
 
-    db.simuladoAtivo = {
-        questoes: questoesAtuais,
-        estilo,
-        materia: materia
-    };
+        // Filtro de Matéria (Exato)
+        if (materia) {
+            query = query.eq('materia', materia);
+        }
 
-    saveDB();
-    renderizarSimulado(estilo);
+        // Filtro de Assunto (Busca parcial/contém)
+        if (assunto) {
+            query = query.ilike('assunto', `%${assunto}%`);
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+        if (!data || data.length === 0) {
+            updateSyncUI('offline');
+            return alert("Nenhuma questão encontrada com esses filtros.");
+        }
+
+        // Embaralhamento e limite
+        let selecionadas = data.sort(() => Math.random() - 0.5).slice(0, limite);
+        
+        questoesAtuais = selecionadas;
+
+        db.simuladoAtivo = {
+            questoes: questoesAtuais,
+            estilo: estilo,
+            materia: materia || assunto
+        };
+
+        await saveDB();
+        renderizarSimulado(estilo);
+        updateSyncUI('synced');
+        toggleConfig();
+
+    } catch (err) {
+        console.error(err);
+        updateSyncUI('offline');
+    }
 }
+
+async function carregarMateriasDisponiveis() {
+    const selectMateria = document.getElementById('select-materia');
+
+    try {
+        // Busca valores únicos da coluna 'materia'
+        // Dica: Usamos .select('materia') e filtramos no JS ou usamos uma RPC se o banco for gigante
+        const { data, error } = await supabaseClient
+            .from('questoes')
+            .select('materia');
+
+        if (error) throw error;
+
+        // Extrai apenas os nomes e remove duplicatas
+        const materiasUnicas = [...new Set(data.map(item => item.materia))].sort();
+
+        // Limpa o select e adiciona as opções
+        selectMateria.innerHTML = '<option value="">-- Todas as Matérias --</option>';
+        
+        materiasUnicas.forEach(materia => {
+            if (materia) { // Evita strings vazias ou nulas
+                const option = document.createElement('option');
+                option.value = materia;
+                option.textContent = materia;
+                selectMateria.appendChild(option);
+            }
+        });
+
+    } catch (err) {
+        console.error("Erro ao carregar lista de matérias:", err);
+        selectMateria.innerHTML = '<option value="">Erro ao carregar</option>';
+    }
+}
+
+// Chame a função ao iniciar a página
+document.addEventListener('DOMContentLoaded', carregarMateriasDisponiveis);
 
 function renderizarSimulado(estilo) {
     const container = document.getElementById('questions-render');

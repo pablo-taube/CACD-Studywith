@@ -72,28 +72,28 @@
 
         <div class="questoes-header-grid">
             <div class="config-panel collapsed" id="config-panel">
-                <h2 onclick="toggleConfig()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 18px;">
-                    Configurar Simulado <span id="accordion-icon">▼</span>
-                </h2>
-                <div id="config-content">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
-                        <select id="set-estilo" class="opt-btn">
-                            <option value="cespe">CESPE (C/E)</option>
-                            <option value="fgv">FGV (A-E)</option>
-                        </select>
-                        <input type="text" id="set-materia" placeholder="Disciplina" class="opt-btn">
-                    </div>
-                    <input type="number" id="set-limite" placeholder="Qtd. de questões" class="opt-btn" style="width: 100%; margin-top: 10px;">
-                    <select id="select-tema" class="opt-btn" style="width: 100%; margin-top: 10px; border-color: var(--accent-color);">
-                        <option value="">-- Utilizar banco de questões --</option>
-                        <option value="geografia.html">Geografia</option>
-                        <option value="vargas.html">Era Vargas</option>
-                        <option value="portugues.html">Português</option>
-                    </select>
-                    <textarea id="raw-html" placeholder="Ou cole o HTML aqui..." style="height: 80px; margin-top: 10px;"></textarea>
-                    <button onclick="processQuestions()" class="btn-primary" style="width: 100%; margin-top: 10px;">Gerar Simulado</button>
-                </div>
-            </div>
+    <h2 onclick="toggleConfig()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 18px;">
+        Configurar Simulado <span id="accordion-icon">▼</span>
+    </h2>
+    <div id="config-content">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+            <select id="set-estilo" class="opt-btn">
+                <option value="cespe">CESPE (C/E)</option>
+                <option value="fgv">FGV (A-E)</option>
+            </select>
+            <input type="number" id="set-limite" placeholder="Qtd. de questões" class="opt-btn">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+           <select id="select-materia" class="opt-btn">
+    <option value="">-- Carregando matérias... --</option>
+</select>
+            <input type="text" id="set-assunto" placeholder="Assunto (ex: Atos)" class="opt-btn">
+        </div>
+
+        <button onclick="processQuestions()" class="btn-primary" style="width: 100%; margin-top: 15px;">Gerar Simulado Filtrado</button>
+    </div>
+</div>
 
             <div id="simulado-score-box" class="card-score-compact">
                 <div class="score-data">

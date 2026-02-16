@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Migração de Questões</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    
+    <div class="questao">
+    <p>O decreto que instituiu o Governo Provisório em 1930 promoveu uma transição política na qual o Poder Executivo passou a concentrar também as atribuições do Poder Legislativo.</p>
+    <div class="comentario">
+        O Poder Executivo passou a concentrar também o Poder Legislativo e os governadores dos estados foram substituídos por interventores nomeados pelo Executivo.
+        <p>Gabarito: Certo</p>
+    </div>
+    <div class="fonte">Fonte: Boris, Fausto. História do Brasil Nação: Olhando para Dentro (1930-1945)</div>
+</div>
+
+<div class="questao">
+    <p>Após a Revolução de 1930, Getúlio Vargas substituiu todos os governadores estaduais por interventores, incluindo o governador de Minas Gerais, para assegurar a unidade de comando.</p>
+    <div class="comentario">
+        os governadores dos estados foram substituídos por interventores nomeados pelo Executivo, com a única exceção de Minas Gerais.
+        <p>Gabarito: Errado</p>
+    </div>
+    <div class="fonte">Fonte: Boris, Fausto. História do Brasil Nação: Olhando para Dentro (1930-1945)</div>
+</div>
+
+    <script>
+        // Inicialização necessária dentro da página de migração
+        const SUPABASE_URL = 'https://ozhtjngfedtslwgeafyv.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_nP-XLqixj7YPWh1AoDFfAQ_JHQSlRF-';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // A função de migração que você executará no console
+        async function migrarParaSupabase(materia, banca) {
+            const blocos = document.querySelectorAll('.questao');
+            console.log(`Iniciando migração de ${blocos.length} questões...`);
+
+            for (const bloco of blocos) {
+                const clone = bloco.cloneNode(true);
+
+                const fonteEl = clone.querySelector('.fonte');
+                const fonte = fonteEl ? fonteEl.innerText : "Diplomatique AI";
+                if (fonteEl) fonteEl.remove();
+
+                const comentarioEl = clone.querySelector('.comentario');
+                let comentario = "";
+                let gabarito = "c"; 
+
+                if (comentarioEl) {
+                    comentario = comentarioEl.innerHTML;
+                    const match = comentario.toLowerCase().match(/gabarito:\s*([a-e]|certo|errado)/);
+                    if (match) {
+                        const g = match[1];
+                        gabarito = (g === 'certo') ? 'c' : (g === 'errado' ? 'e' : g);
+                    }
+                    comentarioEl.remove();
+                }
+
+                const enunciado = clone.innerHTML.trim();
+
+                const { error } = await supabaseClient
+                    .from('questoes')
+                    .insert([{ 
+                        enunciado, 
+                        gabarito, 
+                        banca, 
+                        materia, 
+                        fonte, 
+                        comentario,
+                        historico_respostas: [] 
+                    }]);
+
+                if (error) console.error("Erro na questão:", error);
+                else console.log("✅ Questão migrada!");
+            }
+            alert("Migração Concluída!");
+        }
+    </script>
+</body>
+</html>
