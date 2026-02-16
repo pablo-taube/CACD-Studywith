@@ -1,23 +1,37 @@
-// --- CONFIGURAÇÃO SUPABASE ---
+/* --- CONFIGURAÇÃO SUPABASE --- */
 const SUPABASE_URL = 'https://ozhtjngfedtslwgeafyv.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_nP-XLqixj7YPWh1AoDFfAQ_JHQSlRF-';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// --- 1. BANCO DE DADOS E SINCRONIZAÇÃO ---
+/* --- 1. ESTADO GLOBAL --- */
 let db = { total_questoes: 0, acertos: 0, flashcards: 0, xp: 0, materias: {}, simuladoAtivo: null };
 let currentSession = null;
+let acertosSimulado = 0;
+let errosSimulado = 0;
+let questoesAtuais = [];
+let idQuestaoSendoEditada = null;
 
+/* --- 2. INICIALIZAÇÃO --- */
 async function initializeApp() {
+    // 1. Recuperar tema
+    const savedTheme = localStorage.getItem('donezo_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeUI(savedTheme);
+
+    // 2. Recuperar dados locais
     const localData = localStorage.getItem('donezo_db');
     if (localData) db = JSON.parse(localData);
 
+    // 3. Verificar sessão
     const { data } = await supabaseClient.auth.getSession();
     currentSession = data.session;
 
-    if (currentSession) await fetchRemoteDB();
-    else {
+    if (currentSession) {
+        await fetchRemoteDB();
+        await carregarMateriasDisponiveis();
+    } else {
         updateSyncUI('offline');
-        toggleAuthModal();
+        openAuthModal();
     }
 
     updateDashboard();
@@ -26,6 +40,7 @@ async function initializeApp() {
 
 window.addEventListener('load', initializeApp);
 
+/* --- 3. BANCO DE DADOS E SINCRONIZAÇÃO --- */
 function updateSyncUI(status) {
     const indicator = document.getElementById('sync-indicator');
     if (!indicator) return;
@@ -34,7 +49,6 @@ function updateSyncUI(status) {
     const text = document.getElementById('sync-text');
 
     indicator.className = `sync-status ${status}`;
-
     const states = {
         syncing: { icon: '🔄', text: 'Sincronizando...' },
         synced: { icon: '☁️', text: 'Nuvem Atualizada' },
@@ -51,7 +65,6 @@ async function saveDB() {
     updateDashboard();
 
     if (!currentSession) return;
-
     updateSyncUI('syncing');
 
     const { error } = await supabaseClient
@@ -68,7 +81,6 @@ async function saveDB() {
 
 async function fetchRemoteDB() {
     updateSyncUI('syncing');
-
     try {
         const { data } = await supabaseClient
             .from('user_progress')
@@ -79,7 +91,6 @@ async function fetchRemoteDB() {
             db = data.data_json;
             localStorage.setItem('donezo_db', JSON.stringify(db));
         }
-
         updateSyncUI('synced');
         updateDashboard();
     } catch {
@@ -87,11 +98,30 @@ async function fetchRemoteDB() {
     }
 }
 
-// --- 2. CONTROLE DE SIMULADO ---
-// --- 2. CONTROLE DE SIMULADO (MODIFICADO PARA SUPABASE) ---
-let acertosSimulado = 0;
-let errosSimulado = 0;
-let questoesAtuais = [];
+/* --- 4. CONTROLE DE SIMULADO --- */
+async function carregarMateriasDisponiveis() {
+    const selectMateria = document.getElementById('select-materia');
+    if (!selectMateria) return;
+
+    try {
+        const { data, error } = await supabaseClient.from('questoes').select('materia');
+        if (error) throw error;
+
+        const materiasUnicas = [...new Set(data.map(item => item.materia))].sort();
+        selectMateria.innerHTML = '<option value="">-- Todas as Matérias --</option>';
+        
+        materiasUnicas.forEach(materia => {
+            if (materia) {
+                const option = document.createElement('option');
+                option.value = materia;
+                option.textContent = materia;
+                selectMateria.appendChild(option);
+            }
+        });
+    } catch (err) {
+        console.error("Erro ao carregar matérias:", err);
+    }
+}
 
 async function processQuestions() {
     const materia = document.getElementById('select-materia').value;
@@ -102,85 +132,30 @@ async function processQuestions() {
     if (!materia && !assunto) return alert("Selecione ao menos uma matéria ou assunto!");
 
     updateSyncUI('syncing');
-
     try {
         let query = supabaseClient.from('questoes').select('*');
-
-        // Filtro de Matéria (Exato)
-        if (materia) {
-            query = query.eq('materia', materia);
-        }
-
-        // Filtro de Assunto (Busca parcial/contém)
-        if (assunto) {
-            query = query.ilike('assunto', `%${assunto}%`);
-        }
+        if (materia) query = query.eq('materia', materia);
+        if (assunto) query = query.ilike('assunto', `%${assunto}%`);
 
         const { data, error } = await query;
-
         if (error) throw error;
-        if (!data || data.length === 0) {
+        if (!data?.length) {
             updateSyncUI('offline');
-            return alert("Nenhuma questão encontrada com esses filtros.");
+            return alert("Nenhuma questão encontrada.");
         }
 
-        // Embaralhamento e limite
-        let selecionadas = data.sort(() => Math.random() - 0.5).slice(0, limite);
-        
-        questoesAtuais = selecionadas;
+        questoesAtuais = data.sort(() => Math.random() - 0.5).slice(0, limite);
+        acertosSimulado = 0;
+        errosSimulado = 0;
 
-        db.simuladoAtivo = {
-            questoes: questoesAtuais,
-            estilo: estilo,
-            materia: materia || assunto
-        };
-
-        await saveDB();
         renderizarSimulado(estilo);
         updateSyncUI('synced');
         toggleConfig();
-
     } catch (err) {
         console.error(err);
         updateSyncUI('offline');
     }
 }
-
-async function carregarMateriasDisponiveis() {
-    const selectMateria = document.getElementById('select-materia');
-
-    try {
-        // Busca valores únicos da coluna 'materia'
-        // Dica: Usamos .select('materia') e filtramos no JS ou usamos uma RPC se o banco for gigante
-        const { data, error } = await supabaseClient
-            .from('questoes')
-            .select('materia');
-
-        if (error) throw error;
-
-        // Extrai apenas os nomes e remove duplicatas
-        const materiasUnicas = [...new Set(data.map(item => item.materia))].sort();
-
-        // Limpa o select e adiciona as opções
-        selectMateria.innerHTML = '<option value="">-- Todas as Matérias --</option>';
-        
-        materiasUnicas.forEach(materia => {
-            if (materia) { // Evita strings vazias ou nulas
-                const option = document.createElement('option');
-                option.value = materia;
-                option.textContent = materia;
-                selectMateria.appendChild(option);
-            }
-        });
-
-    } catch (err) {
-        console.error("Erro ao carregar lista de matérias:", err);
-        selectMateria.innerHTML = '<option value="">Erro ao carregar</option>';
-    }
-}
-
-// Chame a função ao iniciar a página
-document.addEventListener('DOMContentLoaded', carregarMateriasDisponiveis);
 
 function renderizarSimulado(estilo) {
     const container = document.getElementById('questions-render');
@@ -190,33 +165,36 @@ function renderizarSimulado(estilo) {
     questoesAtuais.forEach((qObj, index) => {
         const wrapper = document.createElement('div');
         wrapper.className = "q-container";
-        // Armazenamos o ID da questão no elemento para usar na correção
         wrapper.dataset.questaoId = qObj.id; 
 
         wrapper.innerHTML = `
-            <p style="color:var(--accent-color); font-weight:700; font-size:0.8rem;">
-                QUESTÃO ${index + 1} | ${qObj.banca}
-            </p>
-            <div class="enunciado">${qObj.enunciado}</div>
-            <div class="fonte">${qObj.fonte || "Diplomatique Study AI"}</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <p style="color:var(--accent-color); font-weight:700; font-size:0.8rem; margin:0;">
+                    QUESTÃO ${index + 1} | ${qObj.banca || 'Geral'}
+                </p>
+                <button onclick="abrirEditorQuestao(${qObj.id})" title="Editar"
+                        style="background: #f0f4f8; border: 1px solid #d1d9e0; border-radius: 8px; padding: 5px 8px; cursor: pointer; font-size: 1.1rem;">
+                    ✏️
+                </button>
+            </div>
+            <div class="enunciado" id="enunciado-${qObj.id}">${qObj.enunciado}</div>
+            <div class="fonte" style="margin-top: 10px; font-size: 0.8rem; opacity: 0.7;">${qObj.fonte || ""}</div>
             <div class="options-grid">
-                ${renderOptions(estilo, qObj.gabarito, qObj.enunciado)}
+                ${renderOptions(estilo, qObj.gabarito)}
             </div>
         `;
         container.appendChild(wrapper);
     });
 }
 
-function renderOptions(estilo, gabaritoOficial, enunciadoOriginal) {
-    // Agora o gabarito já vem limpo do banco (ex: 'c' ou 'a')
+function renderOptions(estilo, gabarito) {
     if (estilo === 'cespe') {
         return `
-            <button class="opt-btn" onclick="check(this,'c','${gabaritoOficial}','cespe')">Certo</button>
-            <button class="opt-btn" onclick="check(this,'e','${gabaritoOficial}','cespe')">Errado</button>
-        `;
+            <button class="opt-btn" onclick="check(this,'c','${gabarito}','cespe')">Certo</button>
+            <button class="opt-btn" onclick="check(this,'e','${gabarito}','cespe')">Errado</button>`;
     }
     return ['A','B','C','D','E']
-        .map(opt => `<button class="opt-btn" onclick="check(this,'${opt.toLowerCase()}','${gabaritoOficial}','fgv')">${opt}</button>`)
+        .map(opt => `<button class="opt-btn" onclick="check(this,'${opt.toLowerCase()}','${gabarito}','fgv')">${opt}</button>`)
         .join('');
 }
 
@@ -229,7 +207,6 @@ async function check(btn, choice, correct, estilo) {
     optionsGrid.classList.add('answered');
 
     const acertou = choice === correct;
-
     if (acertou) {
         btn.classList.add('correct');
         acertosSimulado++;
@@ -241,9 +218,8 @@ async function check(btn, choice, correct, estilo) {
         if (estilo === 'cespe') db.xp -= 5;
     }
 
-    // Mostra comentário (que agora vem do banco)
     const qData = questoesAtuais.find(q => q.id == questaoId);
-    if (qData && qData.comentario) {
+    if (qData?.comentario) {
         const commentDiv = document.createElement('div');
         commentDiv.className = "comentario show-comment";
         commentDiv.innerHTML = qData.comentario;
@@ -254,96 +230,112 @@ async function check(btn, choice, correct, estilo) {
     document.getElementById('score-erros').innerText = errosSimulado;
     document.getElementById('score-total-q').innerText = questoesAtuais.length;
 
-    // Atualiza estatísticas globais e histórico individual no banco
     saveDB();
     if (questaoId) await updateQuestaoStats(questaoId, acertou);
 }
 
 async function updateQuestaoStats(id, acertou) {
     if (!currentSession) return;
-
-    // 1. Busca histórico atual da questão
-    const { data } = await supabaseClient
-        .from('questoes')
-        .select('historico_respostas')
-        .eq('id', id)
-        .single();
-
+    const { data } = await supabaseClient.from('questoes').select('historico_respostas').eq('id', id).single();
     let historico = data?.historico_respostas || [];
-    
-    // 2. Adiciona nova resposta (true/false) no início e mantém as 3 últimas
     historico.unshift(acertou);
     if (historico.length > 3) historico.pop();
 
-    // 3. Salva a data e o novo histórico
-    await supabaseClient
-        .from('questoes')
-        .update({
-            ultima_vez_respondida: new Date(),
-            historico_respostas: historico
-        })
-        .eq('id', id);
+    await supabaseClient.from('questoes').update({
+        ultima_vez_respondida: new Date(),
+        historico_respostas: historico
+    }).eq('id', id);
 }
 
-// --- 3. AUTENTICAÇÃO ---
-let isSignUp = false;
+/* --- 5. EDITOR DE QUESTÕES --- */
+function abrirEditorQuestao(id) {
+    const questao = questoesAtuais.find(q => q.id === id);
+    if (!questao) return;
 
-function toggleAuthModal() {
-    document.getElementById('auth-modal').classList.toggle('active');
+    idQuestaoSendoEditada = id;
+    document.getElementById('edit-id').value = id;
+    document.getElementById('edit-enunciado').value = questao.enunciado;
+    document.getElementById('edit-comentario').value = questao.comentario || "";
+    document.getElementById('edit-materia').value = questao.materia || "";
+    document.getElementById('edit-assunto').value = questao.assunto || "";
+    document.getElementById('edit-fonte').value = questao.fonte || "";
+    document.getElementById('edit-gabarito').value = questao.gabarito || "";
+
+    document.getElementById('modal-editor').classList.add('active');
 }
 
-function closeAuthModal() {
-    document.getElementById('auth-modal').classList.remove('active');
+function fecharEditor() {
+    document.getElementById('modal-editor').classList.remove('active');
 }
 
-function toggleAuthMode() {
-    isSignUp = !isSignUp;
-    document.getElementById('auth-title').innerText =
-        isSignUp ? 'Criar Conta' : 'Entrar na Nuvem';
+async function salvarEdicaoCompleta() {
+    const id = idQuestaoSendoEditada;
+    const dados = {
+        enunciado: document.getElementById('edit-enunciado').value,
+        comentario: document.getElementById('edit-comentario').value,
+        materia: document.getElementById('edit-materia').value,
+        assunto: document.getElementById('edit-assunto').value,
+        fonte: document.getElementById('edit-fonte').value,
+        gabarito: document.getElementById('edit-gabarito').value.toLowerCase()
+    };
+
+    updateSyncUI('syncing');
+    const { error } = await supabaseClient.from('questoes').update(dados).eq('id', id);
+
+    if (error) {
+        alert("Erro: " + error.message);
+        updateSyncUI('offline');
+    } else {
+        updateSyncUI('synced');
+        fecharEditor();
+        const index = questoesAtuais.findIndex(q => q.id == id);
+        if (index !== -1) {
+            questoesAtuais[index] = { ...questoesAtuais[index], ...dados };
+            const el = document.getElementById(`enunciado-${id}`);
+            if (el) el.innerHTML = dados.enunciado;
+        }
+        alert("Salvo com sucesso!");
+    }
 }
+
+/* --- 6. AUTENTICAÇÃO E UTILITÁRIOS --- */
+function toggleAuthModal() { document.getElementById('auth-modal').classList.toggle('active'); }
+function closeAuthModal() { document.getElementById('auth-modal').classList.remove('active'); }
+function openAuthModal() { document.getElementById("auth-modal").classList.remove("hidden"); }
 
 async function handleAuth() {
     const email = document.getElementById('auth-email').value;
     const password = document.getElementById('auth-password').value;
-
-    if (isSignUp) {
-        await supabaseClient.auth.signUp({ email, password });
-        return;
-    }
-
     const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-
     if (error) return alert(error.message);
-
-    await fetchRemoteDB();
     location.reload();
 }
 
-// --- 4. UTILITÁRIOS ---
-function toggleMobileMenu() {
-    const sidebar = document.getElementById('sidebar');
-    const active = sidebar.classList.toggle('active');
-    document.getElementById('hamburger-icon').innerText = active ? '✕' : '☰';
+function toggleTheme() {
+    const html = document.documentElement;
+    const theme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', theme);
+    localStorage.setItem('donezo_theme', theme);
+    updateThemeUI(theme);
+}
+
+function updateThemeUI(theme) {
+    const icon = document.getElementById('theme-icon');
+    const text = document.getElementById('theme-text');
+    if (icon) icon.innerText = theme === 'dark' ? '☀️' : '🌙';
+    if (text) text.innerText = theme === 'dark' ? 'Modo Claro' : 'Modo Escuro';
 }
 
 function toggleConfig() {
     const panel = document.getElementById('config-panel');
     panel.classList.toggle('collapsed');
-    document.getElementById('accordion-icon').innerText =
-        panel.classList.contains('collapsed') ? '▼' : '▲';
+    document.getElementById('accordion-icon').innerText = panel.classList.contains('collapsed') ? '▼' : '▲';
 }
 
 function updateDashboard() {
     const total = db.total_questoes || 0;
-    const accuracy = total > 0
-        ? Math.round((db.acertos / total) * 100) + "%"
-        : "0%";
-
-    const setText = (id, value) => {
-        const el = document.getElementById(id);
-        if (el) el.innerText = value;
-    };
-
+    const accuracy = total > 0 ? Math.round((db.acertos / total) * 100) + "%" : "0%";
+    const setText = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
     setText('stat-total-q', total);
     setText('stat-accuracy', accuracy);
     setText('stat-flash', db.flashcards || 0);
@@ -352,66 +344,7 @@ function updateDashboard() {
 
 function highlightActiveMenu() {
     const page = window.location.pathname.split("/").pop() || "index.html";
-
     document.querySelectorAll('.menu-item').forEach(item => {
-        const href = item.getAttribute('href');
-        if (href && href.includes(page)) item.classList.add('active');
+        if (item.getAttribute('href')?.includes(page)) item.classList.add('active');
     });
-}
-
-function openAuthModal() {
-    document.getElementById("auth-modal").classList.remove("hidden");
-}
-
-function closeAuthModal() {
-    document.getElementById("auth-modal").classList.add("hidden");
-}
-
-if (!supabaseClient.auth.getSession()) {
-    openAuthModal();
-}
-
-
-// --- ATUALIZAÇÃO DA INICIALIZAÇÃO ---
-async function initializeApp() {
-    const localData = localStorage.getItem('donezo_db');
-    if (localData) db = JSON.parse(localData);
-
-    // RECUPERAR TEMA SALVO
-    const savedTheme = localStorage.getItem('donezo_theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    updateThemeUI(savedTheme);
-
-    const { data } = await supabaseClient.auth.getSession();
-    currentSession = data.session;
-
-    if (currentSession) await fetchRemoteDB();
-    else {
-        updateSyncUI('offline');
-        toggleAuthModal();
-    }
-
-    updateDashboard();
-    highlightActiveMenu();
-}
-
-// --- FUNÇÕES DE TEMA ---
-function toggleTheme() {
-    const html = document.documentElement;
-    const currentTheme = html.getAttribute('data-theme') || 'light';
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    
-    html.setAttribute('data-theme', newTheme);
-    localStorage.setItem('donezo_theme', newTheme);
-    updateThemeUI(newTheme);
-}
-
-function updateThemeUI(theme) {
-    const icon = document.getElementById('theme-icon');
-    const text = document.getElementById('theme-text');
-    
-    if (icon && text) {
-        icon.innerText = theme === 'dark' ? '☀️' : '🌙';
-        text.innerText = theme === 'dark' ? 'Modo Claro' : 'Modo Escuro';
-    }
 }
