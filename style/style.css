@@ -180,7 +180,7 @@ body {
 
 /* CARTÃO SANFONADO */
 .config-panel {
-    background: #e9edea;
+    background: #fafafa;
     padding: 20px;
     border-radius: 20px;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -252,20 +252,6 @@ body {
     padding-bottom: 100px;
 }
 
-.q-container {
-    background: #fffaf6 !important;
-    border-radius: 24px;
-    padding: 32px;
-    border: 1px solid #edf2f7;
-    animation: fadeIn 0.4s ease;
-    
-    /* Centralização e largura */
-    width: 80%;
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 20px; /* Mantém o espaçamento entre as questões */
-    margin-bottom: 20px;
-}
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -625,28 +611,6 @@ textarea {
     }
 }
 
-/* --- NOVAS VARIÁVEIS DE CORES PASTÉIS --- */
-:root {
-  --card-bg: #fffaf6;
-  --text-color: #2a2a2a;
-  --question-bg: #f3e6da;   /* bege bebê */
-  --answer-bg: #fdfcfb;     /* quase branco quente */
-  --comment-bg: #f6f1ec;
-  --accent-color: #d4a373;  /* caramelo suave */
-  --text-muted: #6b7280;
-}
-
-/* Integração com o seu Modo Escuro Manual */
-[data-theme="dark"] {
-  --card-bg: #1f2328;
-  --text-color: #f3f4f6;
-  --question-bg: #2f3b4a;   /* azul acinzentado pastel */
-  --answer-bg: #262b31;
-  --comment-bg: #2b3138;
-  --accent-color: #9bb8d7;  /* azul bebê */
-  --text-muted: #9ca3af;
-}
-
 /* Espaçamento em listas dentro das questões */
 .q-container ul li, .q-container ol li {
   margin-bottom: 8px;
@@ -664,7 +628,7 @@ textarea {
   width: 90%;
   margin: 20px auto; /* Centralização */
 
-  background-color: var(--card-bg);
+  background-color: #fafafa !important; /* Azul pastel muito claro */
   color: var(--text-color);
   box-shadow: 0 8px 24px rgba(0,0,0,0.07);
   border: none; /* Remove a borda antiga */
@@ -678,10 +642,9 @@ textarea {
   font-family: "Inter", "Plus Jakarta Sans", sans-serif;
   font-size: 1.2rem;
   font-weight: 400;
-  line-height: 1.6;
+  line-height: 1.2;
   padding: 18px;
   border-radius: 16px;
-  background-color: var(--question-bg);
   color: inherit;
   animation: fadeIn 0.5s ease-out;
 }
