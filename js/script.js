@@ -138,17 +138,24 @@ function renderizarSimulado(estilo) {
         const wrapper = document.createElement('div');
         wrapper.className = "q-container";
 
+        // Criamos um elemento temporário para manipular o HTML
         const temp = document.createElement('div');
         temp.innerHTML = qHtml;
 
-        const fonte = temp.querySelector('.fonte')?.innerText || "Diplomatique Study AI";
+        // 1. Extraímos o texto da fonte
+        const fonteEl = temp.querySelector('.fonte');
+        const textoFonte = fonteEl ? fonteEl.innerText : "Diplomatique Study AI";
 
+        // 2. LÓGICA PARA NÃO DUPLICAR: Removemos a div original de fonte do temp
+        if (fonteEl) fonteEl.remove();
+
+        // 3. Montamos o HTML final com o conteúdo limpo
         wrapper.innerHTML = `
             <p style="color:var(--accent-color); font-weight:700; font-size:0.8rem;">
                 QUESTÃO ${index + 1}
             </p>
-            <div class="enunciado">${qHtml}</div>
-            <div class="fonte">${fonte}</div>
+            <div class="enunciado">${temp.innerHTML}</div>
+            <div class="fonte">${textoFonte}</div>
             <div class="options-grid">
                 ${renderOptions(estilo, qHtml)}
             </div>
