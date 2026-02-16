@@ -582,3 +582,36 @@ textarea {
         padding-top: 85px;
     }
 }
+
+/* --- MODAL DE LOGIN (ESTILO DIPLOMATIQUE) --- */
+.auth-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    z-index: 2000;
+    display: none; /* Escondido por padrão */
+    justify-content: center;
+    align-items: center;
+}
+
+.auth-card {
+    background: var(--sidebar-bg);
+    width: 90%;
+    max-width: 380px;
+    padding: 40px 30px;
+    border-radius: 30px;
+    text-align: center;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+    animation: authPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes authPop {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+#auth-modal.active {
+    display: flex;
+}

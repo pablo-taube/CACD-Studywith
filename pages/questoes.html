@@ -3,113 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <title>Diplomatique | Questões</title>
-    <link rel="stylesheet" href="../style/style.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../style/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-
-<body>    
-<button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
-    <span id="hamburger-icon">☰</span>
-</button>
-
-<div class="sidebar-overlay" onclick="toggleMobileMenu()"></div>
-
-<aside class="sidebar" id="sidebar">
-    <div class="logo">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="10" stroke="#25614D" stroke-width="4"/>
-        </svg>
-        Diplomatique
-    </div>
+<body>
     
-    <div class="menu-group">
-        <div class="menu-label">Menu</div>
-        <a href="../index.html" class="menu-item">📊 Dashboard</a>
-        <a href="revisao.html" class="menu-item">📘 Revisão</a>
-        <a href="flashcards.html" class="menu-item">🧠 Flashcards</a>
-        <a href="questoes.html" class="menu-item active">📝 Questões</a>
-    </div>
-
-    <div class="menu-group" style="margin-top:auto">
-        <div class="menu-label">General</div>
-        <div class="menu-item">⚙️ Settings</div>
-        <div class="menu-item" onclick="clearData()" style="cursor:pointer">🧹 Resetar Banco</div>
-    </div>
-    
-    <button class="theme-switch" onclick="toggleTheme()" id="theme-toggle">
-        <span id="theme-text">Modo Escuro</span>
-        <div class="theme-icon" id="theme-icon">🌙</div>
+    <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+        <span id="hamburger-icon">☰</span>
     </button>
-</aside>
+    <div class="sidebar-overlay" onclick="toggleMobileMenu()"></div>
+
+    <div id="auth-modal" class="auth-overlay">
+        <div class="auth-card">
+            <div class="logo" style="justify-content: center; margin-bottom: 20px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="10" stroke="#25614D" stroke-width="4"/>
+                </svg>
+                Diplomatique
+            </div>
+            <h2 id="auth-title">Entrar na Nuvem</h2>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Sincronize seu progresso entre dispositivos.</p>
+            <input type="email" id="auth-email" placeholder="Seu e-mail" class="opt-btn" style="width: 100%; margin-bottom: 10px; padding: 12px;">
+            <input type="password" id="auth-password" placeholder="Sua senha" class="opt-btn" style="width: 100%; margin-bottom: 20px; padding: 12px;">
+            <button onclick="handleAuth()" class="btn-primary" style="width: 100%; padding: 14px; margin-bottom: 10px;" id="auth-btn-main">Entrar</button>
+            <p style="font-size: 12px; cursor: pointer; color: var(--accent);" onclick="toggleAuthMode()" id="auth-toggle-text">Não tem conta? Cadastre-se</p>
+            <button onclick="closeAuthModal()" class="btn-mini-reset" style="margin-top: 15px; background: transparent; color: var(--text-muted);">Continuar Offline</button>
+        </div>
+    </div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="#25614D" stroke-width="4"/>
+            </svg>
+            Diplomatique
+        </div>
+        <div class="menu-group">
+            <div class="menu-label">Menu</div>
+            <a href="../index.html" class="menu-item">📊 Dashboard</a>
+            <a href="revisao.html" class="menu-item">📘 Revisão</a>
+            <a href="flashcards.html" class="menu-item">🧠 Flashcards</a>
+            <a href="questoes.html" class="menu-item active">📝 Questões</a>
+        </div>
+        <div class="menu-group" style="margin-top:auto">
+            <div class="menu-label">General</div>
+            <div class="menu-item" onclick="supabaseClient.auth.signOut().then(() => location.reload())">🚪 Sair da Conta</div>
+            <div class="menu-item" onclick="clearData()">🧹 Resetar Banco</div>
+        </div>
+        <button class="theme-switch" onclick="toggleTheme()" id="theme-toggle">
+            <span id="theme-text">Modo Escuro</span>
+            <div class="theme-icon" id="theme-icon">🌙</div>
+        </button>
+    </aside>
 
     <main class="main-content">
-        <header class="topbar">
-            </header>
-
+        <header class="topbar"></header>
         <h1 style="margin-bottom: 20px;">Simulado Inteligente</h1>
 
         <div class="questoes-header-grid">
             <div class="config-panel collapsed" id="config-panel">
                 <h2 onclick="toggleConfig()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 18px;">
-                    Configurar Simulado 
-                    <span id="accordion-icon" style="font-size: 12px;">▼</span>
+                    Configurar Simulado <span id="accordion-icon">▼</span>
                 </h2>
-                
                 <div id="config-content">
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
-        <select id="set-estilo" class="opt-btn" style="padding: 10px;">
-            <option value="cespe">CESPE (C/E)</option>
-            <option value="fgv">FGV (A-E)</option>
-        </select>
-        <input type="text" id="set-materia" placeholder="Disciplina" class="opt-btn" style="padding: 10px;">
-    </div>
-
-    <div style="margin-top: 10px;">
-        <input type="number" id="set-limite" placeholder="Quantidade de questões (Ex: 10)" class="opt-btn" style="width: 100%; padding: 10px;">
-    </div>
-
-    <div style="margin-top: 10px;">
-        <select id="select-tema" class="opt-btn" style="width: 100%; padding: 10px; border-color: var(--accent);">
-            <option value="">-- Utilizar banco de questões --</option>
-            <option value="geografia.html">Geografia</option>
-            <option value="vargas.html">7 - A Era Vargas (1930-1945)</option>
-            <option value="portugues.html">Língua Portuguesa</option>
-        </select>
-    </div>
-    
-    <textarea id="raw-html" placeholder="Ou cole o HTML das questões aqui..." style="height: 80px; margin-top: 10px;"></textarea>
-    
-    <button onclick="processQuestions()" class="btn-primary" style="width: 100%; padding: 10px; margin-top: 5px;">Gerar Simulado</button>
-</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                        <select id="set-estilo" class="opt-btn">
+                            <option value="cespe">CESPE (C/E)</option>
+                            <option value="fgv">FGV (A-E)</option>
+                        </select>
+                        <input type="text" id="set-materia" placeholder="Disciplina" class="opt-btn">
+                    </div>
+                    <input type="number" id="set-limite" placeholder="Qtd. de questões" class="opt-btn" style="width: 100%; margin-top: 10px;">
+                    <select id="select-tema" class="opt-btn" style="width: 100%; margin-top: 10px; border-color: var(--accent);">
+                        <option value="">-- Utilizar banco de questões --</option>
+                        <option value="geografia.html">Geografia</option>
+                        <option value="vargas.html">Era Vargas</option>
+                        <option value="portugues.html">Português</option>
+                    </select>
+                    <textarea id="raw-html" placeholder="Ou cole o HTML aqui..." style="height: 80px; margin-top: 10px;"></textarea>
+                    <button onclick="processQuestions()" class="btn-primary" style="width: 100%; margin-top: 10px;">Gerar Simulado</button>
+                </div>
             </div>
 
-           <div id="simulado-score-box" class="card-score-compact">
-    <div class="score-data">
-        <div class="score-main-val">
-            <span id="score-acertos">0</span>
-            <small>/ <span id="score-total-q">0</span></small>
-        </div>
-        
-        <div class="score-divider"></div>
-
-        <div class="score-details">
-            <p>Erros registrados</p>
-            <span id="score-erros">0</span>
-            <button id="btn-reset-simulado" onclick="resetSimulado()" class="btn-mini-reset" style="display:none;">
-                Resetar Simulado
-            </button>
-        </div>
-    </div>
-</div>
+            <div id="simulado-score-box" class="card-score-compact">
+                <div class="score-data">
+                    <div class="score-main-val"><span id="score-acertos">0</span><small>/ <span id="score-total-q">0</span></small></div>
+                    <div class="score-divider"></div>
+                    <div class="score-details">
+                        <p>Erros</p><span id="score-erros">0</span>
+                        <button id="btn-reset-simulado" onclick="resetSimulado()" class="btn-mini-reset" style="display:none;">Resetar</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div id="questions-render" class="questoes-lista-total"></div>
     </main>
 
     <div class="timer-widget">
-        <p>TEMPO DE PROVA</p>
+        <p>TEMPO</p>
         <div class="timer-clock" id="clock">00:00:00</div>
-        <div style="display: flex; gap: 5px; justify-content: center;">
+        <div style="display: flex; gap: 5px;">
             <button onclick="toggleTimer()" id="btn-timer">Iniciar</button>
             <button onclick="resetTimer()" style="background: #444;">Reset</button>
         </div>
