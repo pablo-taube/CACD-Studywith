@@ -294,3 +294,48 @@ function closeAuthModal() {
 if (!supabaseClient.auth.getSession()) {
     openAuthModal();
 }
+
+
+// --- ATUALIZAÇÃO DA INICIALIZAÇÃO ---
+async function initializeApp() {
+    const localData = localStorage.getItem('donezo_db');
+    if (localData) db = JSON.parse(localData);
+
+    // RECUPERAR TEMA SALVO
+    const savedTheme = localStorage.getItem('donezo_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeUI(savedTheme);
+
+    const { data } = await supabaseClient.auth.getSession();
+    currentSession = data.session;
+
+    if (currentSession) await fetchRemoteDB();
+    else {
+        updateSyncUI('offline');
+        toggleAuthModal();
+    }
+
+    updateDashboard();
+    highlightActiveMenu();
+}
+
+// --- FUNÇÕES DE TEMA ---
+function toggleTheme() {
+    const html = document.documentElement;
+    const currentTheme = html.getAttribute('data-theme') || 'light';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    html.setAttribute('data-theme', newTheme);
+    localStorage.setItem('donezo_theme', newTheme);
+    updateThemeUI(newTheme);
+}
+
+function updateThemeUI(theme) {
+    const icon = document.getElementById('theme-icon');
+    const text = document.getElementById('theme-text');
+    
+    if (icon && text) {
+        icon.innerText = theme === 'dark' ? '☀️' : '🌙';
+        text.innerText = theme === 'dark' ? 'Modo Claro' : 'Modo Escuro';
+    }
+}

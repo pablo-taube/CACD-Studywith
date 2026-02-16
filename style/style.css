@@ -15,7 +15,7 @@
     --error: #E74C3C;
     
     /* Elementos de Estudo (Pastel) */
-    --card-bg: #F8FAFC;       /* Azul quase branco */
+    --card-bg: #fafafa;       /* Azul quase branco */
     --question-bg: #D1E9F6;   /* Azul bebê suave */
     --answer-bg: #FFFFFF;
     --comment-bg: #E2E8F0;    /* Cinza azulado claro */
@@ -628,7 +628,7 @@ textarea {
   width: 90%;
   margin: 20px auto; /* Centralização */
 
-  background-color: #fafafa !important; /* Azul pastel muito claro */
+  background-color: var(--card-bg); /* Azul pastel muito claro */
   color: var(--text-color);
   box-shadow: 0 8px 24px rgba(0,0,0,0.07);
   border: none; /* Remove a borda antiga */
@@ -691,4 +691,18 @@ textarea {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Dark Mode - Tons de Azul Pastel Profundo */
+[data-theme="dark"] {
+    --sidebar-bg: #15191E;
+    --app-bg: #0D1117;
+    --white: #1C2128;
+    --text-main: #E6EDF3;
+    --text-muted: #8B949E;
+    --card-bg: #161B22;
+    --question-bg: #1C2D3F;
+    --answer-bg: #0D1117;
+    --comment-bg: #21262D;
+    --accent-color: #58A6FF;
 }
