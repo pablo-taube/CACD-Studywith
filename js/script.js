@@ -88,40 +88,33 @@ async function fetchRemoteDB() {
 }
 
 // --- 2. CONTROLE DE SIMULADO ---
+// --- 2. CONTROLE DE SIMULADO (MODIFICADO PARA SUPABASE) ---
 let acertosSimulado = 0;
 let errosSimulado = 0;
 let questoesAtuais = [];
 
 async function processQuestions() {
-    const tema = document.getElementById('select-tema').value;
+    const materia = document.getElementById('select-tema').value;
     const estilo = document.getElementById('set-estilo').value;
-    const limite = parseInt(document.getElementById('set-limite').value);
-    const rawInput = document.getElementById('raw-html');
+    const limite = parseInt(document.getElementById('set-limite').value) || 10;
 
-    let raw = "";
+    // Busca questões diretamente da tabela 'questoes' do Supabase
+    const { data, error } = await supabaseClient
+        .from('questoes')
+        .select('*')
+        .eq('materia', materia.replace('.html', '')); // Ajuste caso o value do select ainda tenha .html
 
-    if (tema) {
-        const res = await fetch(`../banco-questoes/${tema}`);
-        raw = await res.text();
-    } else if (rawInput) {
-        raw = rawInput.value;
-    }
+    if (error || !data.length) return alert("Não foram encontradas questões para este tema no banco de dados.");
 
-    if (!raw) return alert("Selecione um tema!");
-
-    const temp = document.createElement('div');
-    temp.innerHTML = raw;
-
-    let todas = Array.from(temp.querySelectorAll('.questao')).map(n => n.outerHTML);
-    if (!todas.length) todas = [raw];
-
+    // Embaralha e aplica o limite
+    let todas = data;
     todas.sort(() => Math.random() - 0.5);
-    questoesAtuais = limite > 0 ? todas.slice(0, limite) : todas;
+    questoesAtuais = todas.slice(0, limite);
 
     db.simuladoAtivo = {
         questoes: questoesAtuais,
         estilo,
-        materia: tema || "Geral"
+        materia: materia
     };
 
     saveDB();
@@ -131,64 +124,45 @@ async function processQuestions() {
 function renderizarSimulado(estilo) {
     const container = document.getElementById('questions-render');
     if (!container) return;
-
     container.innerHTML = "";
 
-    questoesAtuais.forEach((qHtml, index) => {
+    questoesAtuais.forEach((qObj, index) => {
         const wrapper = document.createElement('div');
         wrapper.className = "q-container";
+        // Armazenamos o ID da questão no elemento para usar na correção
+        wrapper.dataset.questaoId = qObj.id; 
 
-        // Criamos um elemento temporário para manipular o HTML
-        const temp = document.createElement('div');
-        temp.innerHTML = qHtml;
-
-        // 1. Extraímos o texto da fonte
-        const fonteEl = temp.querySelector('.fonte');
-        const textoFonte = fonteEl ? fonteEl.innerText : "Diplomatique Study AI";
-
-        // 2. LÓGICA PARA NÃO DUPLICAR: Removemos a div original de fonte do temp
-        if (fonteEl) fonteEl.remove();
-
-        // 3. Montamos o HTML final com o conteúdo limpo
         wrapper.innerHTML = `
             <p style="color:var(--accent-color); font-weight:700; font-size:0.8rem;">
-                QUESTÃO ${index + 1}
+                QUESTÃO ${index + 1} | ${qObj.banca}
             </p>
-            <div class="enunciado">${temp.innerHTML}</div>
-            <div class="fonte">${textoFonte}</div>
+            <div class="enunciado">${qObj.enunciado}</div>
+            <div class="fonte">${qObj.fonte || "Diplomatique Study AI"}</div>
             <div class="options-grid">
-                ${renderOptions(estilo, qHtml)}
+                ${renderOptions(estilo, qObj.gabarito, qObj.enunciado)}
             </div>
         `;
-
         container.appendChild(wrapper);
     });
 }
 
-function renderOptions(estilo, text) {
+function renderOptions(estilo, gabaritoOficial, enunciadoOriginal) {
+    // Agora o gabarito já vem limpo do banco (ex: 'c' ou 'a')
     if (estilo === 'cespe') {
-        const isC = text.toLowerCase().includes('gabarito: certo');
-        const correct = isC ? 'c' : 'e';
-
         return `
-            <button class="opt-btn" onclick="check(this,'c','${correct}','cespe')">Certo</button>
-            <button class="opt-btn" onclick="check(this,'e','${correct}','cespe')">Errado</button>
+            <button class="opt-btn" onclick="check(this,'c','${gabaritoOficial}','cespe')">Certo</button>
+            <button class="opt-btn" onclick="check(this,'e','${gabaritoOficial}','cespe')">Errado</button>
         `;
     }
-
-    const match = text.match(/gabarito:\s*([a-e])/i);
-    const correct = match ? match[1].toLowerCase() : 'a';
-
     return ['A','B','C','D','E']
-        .map(opt =>
-            `<button class="opt-btn" onclick="check(this,'${opt.toLowerCase()}','${correct}','fgv')">${opt}</button>`
-        )
+        .map(opt => `<button class="opt-btn" onclick="check(this,'${opt.toLowerCase()}','${gabaritoOficial}','fgv')">${opt}</button>`)
         .join('');
 }
 
-function check(btn, choice, correct, estilo) {
+async function check(btn, choice, correct, estilo) {
     const container = btn.closest('.q-container');
     const optionsGrid = btn.parentElement;
+    const questaoId = container.dataset.questaoId;
 
     if (optionsGrid.classList.contains('answered')) return;
     optionsGrid.classList.add('answered');
@@ -206,14 +180,48 @@ function check(btn, choice, correct, estilo) {
         if (estilo === 'cespe') db.xp -= 5;
     }
 
-    const comment = container.querySelector('.comentario');
-    if (comment) comment.classList.add('show-comment');
+    // Mostra comentário (que agora vem do banco)
+    const qData = questoesAtuais.find(q => q.id == questaoId);
+    if (qData && qData.comentario) {
+        const commentDiv = document.createElement('div');
+        commentDiv.className = "comentario show-comment";
+        commentDiv.innerHTML = qData.comentario;
+        container.appendChild(commentDiv);
+    }
 
     document.getElementById('score-acertos').innerText = acertosSimulado;
     document.getElementById('score-erros').innerText = errosSimulado;
     document.getElementById('score-total-q').innerText = questoesAtuais.length;
 
+    // Atualiza estatísticas globais e histórico individual no banco
     saveDB();
+    if (questaoId) await updateQuestaoStats(questaoId, acertou);
+}
+
+async function updateQuestaoStats(id, acertou) {
+    if (!currentSession) return;
+
+    // 1. Busca histórico atual da questão
+    const { data } = await supabaseClient
+        .from('questoes')
+        .select('historico_respostas')
+        .eq('id', id)
+        .single();
+
+    let historico = data?.historico_respostas || [];
+    
+    // 2. Adiciona nova resposta (true/false) no início e mantém as 3 últimas
+    historico.unshift(acertou);
+    if (historico.length > 3) historico.pop();
+
+    // 3. Salva a data e o novo histórico
+    await supabaseClient
+        .from('questoes')
+        .update({
+            ultima_vez_respondida: new Date(),
+            historico_respostas: historico
+        })
+        .eq('id', id);
 }
 
 // --- 3. AUTENTICAÇÃO ---
