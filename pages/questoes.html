@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Diplomatique | Questões</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../style/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -28,18 +28,18 @@
             <input type="email" id="auth-email" placeholder="Seu e-mail" class="opt-btn" style="width: 100%; margin-bottom: 10px; padding: 12px;">
             <input type="password" id="auth-password" placeholder="Sua senha" class="opt-btn" style="width: 100%; margin-bottom: 20px; padding: 12px;">
             <button onclick="handleAuth()" class="btn-primary" style="width: 100%; padding: 14px; margin-bottom: 10px;" id="auth-btn-main">Entrar</button>
-            <p style="font-size: 12px; cursor: pointer; color: var(--accent);" onclick="toggleAuthMode()" id="auth-toggle-text">Não tem conta? Cadastre-se</p>
+            <p style="font-size: 12px; cursor: pointer; color: var(--accent-color);" onclick="toggleAuthMode()" id="auth-toggle-text">Não tem conta? Cadastre-se</p>
             <button onclick="closeAuthModal()" class="btn-mini-reset" style="margin-top: 15px; background: transparent; color: var(--text-muted);">Continuar Offline</button>
         </div>
     </div>
 
     <aside class="sidebar" id="sidebar">
         <div class="logo">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="10" stroke="#25614D" stroke-width="4"/>
-        </svg>
-        Diplomatique
-    </div>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="#25614D" stroke-width="4"/>
+            </svg>
+            Diplomatique
+        </div>
 
         <div class="menu-group">
             <div class="menu-label">Menu</div>
@@ -48,15 +48,18 @@
             <a href="flashcards.html" class="menu-item">🧠 Flashcards</a>
             <a href="questoes.html" class="menu-item active">📝 Questões</a>
         </div>
+
         <div class="menu-group" style="margin-top:auto">
             <div class="menu-label">General</div>
-            <div class="menu-item" onclick="supabaseClient.auth.signOut().then(() => location.reload())">🚪 Sair da Conta</div>
+            <div class="menu-item" onclick="supabaseClient.auth.signOut().then(() => { localStorage.removeItem('sb-ozhtjngfedtslwgeafyv-auth-token'); location.reload(); })">🚪 Sair da Conta</div>
             <div class="menu-item" onclick="clearData()">🧹 Resetar Banco</div>
         </div>
-        <div id="sync-indicator" class="sync-status offline" style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; margin: -20px 0 20px 0; font-size: 11px; border-radius: 8px;">
-        <span id="sync-icon">☁️</span>
-        <span id="sync-text">Offline</span>
-    </div>
+
+          <div id="sync-indicator" class="sync-status offline">
+            <span id="sync-icon">☁️</span>
+            <span id="sync-text">Offline</span>
+        </div>
+
         <button class="theme-switch" onclick="toggleTheme()" id="theme-toggle">
             <span id="theme-text">Modo Escuro</span>
             <div class="theme-icon" id="theme-icon">🌙</div>
@@ -81,7 +84,7 @@
                         <input type="text" id="set-materia" placeholder="Disciplina" class="opt-btn">
                     </div>
                     <input type="number" id="set-limite" placeholder="Qtd. de questões" class="opt-btn" style="width: 100%; margin-top: 10px;">
-                    <select id="select-tema" class="opt-btn" style="width: 100%; margin-top: 10px; border-color: var(--accent);">
+                    <select id="select-tema" class="opt-btn" style="width: 100%; margin-top: 10px; border-color: var(--accent-color);">
                         <option value="">-- Utilizar banco de questões --</option>
                         <option value="geografia.html">Geografia</option>
                         <option value="vargas.html">Era Vargas</option>

@@ -6,6 +6,26 @@
     <link rel="stylesheet" href="../style/style.css">
 </head>
 <body>
+    <div id="auth-modal" class="auth-overlay">
+    <div class="auth-card">
+        <div class="logo" style="justify-content: center; margin-bottom: 20px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="#25614D" stroke-width="4"/>
+            </svg>
+            Diplomatique
+        </div>
+        <h2 id="auth-title">Entrar na Nuvem</h2>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Sincronize seu progresso entre dispositivos.</p>
+        
+        <input type="email" id="auth-email" placeholder="Seu e-mail" class="opt-btn" style="width: 100%; margin-bottom: 10px; padding: 12px;">
+        <input type="password" id="auth-password" placeholder="Sua senha" class="opt-btn" style="width: 100%; margin-bottom: 20px; padding: 12px;">
+        
+        <button onclick="handleAuth()" class="btn-primary" style="width: 100%; padding: 14px; margin-bottom: 10px;" id="auth-btn-main">Entrar</button>
+        <p style="font-size: 12px; cursor: pointer; color: var(--accent);" onclick="toggleAuthMode()" id="auth-toggle-text">Não tem conta? Cadastre-se</p>
+        
+        <button onclick="closeAuthModal()" class="btn-mini-reset" style="margin-top: 15px; background: transparent; color: var(--text-muted);">Continuar Offline</button>
+    </div>
+</div>
     <aside class="sidebar">
     <div class="logo">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

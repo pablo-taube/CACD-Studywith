@@ -1,28 +1,48 @@
 /* --- VARIÁVEIS E DEFINIÇÕES GERAIS --- */
 :root {
-    --primary-gradient: linear-gradient(135deg, #16423C 0%, #25614D 100%);
+    /* Cores Principais - Azul Pastel */
+    --primary-gradient: linear-gradient(135deg, #1A374D 0%, #406882 100%);
     --sidebar-bg: #FFFFFF;
-    --app-bg: #F3F6F5;
-    --accent: #6A9C89;
-    --dark: #0A1F1A;
-    --text-main: #1A202C;
-    --text-muted: #718096;
+    --app-bg: #F0F4F8; /* Azul gelo muito claro */
+    --accent: #6998AB;  /* Azul pastel médio */
+    --dark: #0F1D2E;    /* Azul marinho profundo */
     --white: #ffffff;
+    
+    /* Tipografia e Feedback */
+    --text-main: #1C2D3F;
+    --text-muted: #64748B;
     --success: #2ECC71;
     --error: #E74C3C;
-    --comment-bg: #f6f1ec;
-    --accent-color: #d4a373;
-    --comment-bg: #2d2d2d;
-    --accent-color: #6A9C89;
+    
+    /* Elementos de Estudo (Pastel) */
+    --card-bg: #F8FAFC;       /* Azul quase branco */
+    --question-bg: #D1E9F6;   /* Azul bebê suave */
+    --answer-bg: #FFFFFF;
+    --comment-bg: #E2E8F0;    /* Cinza azulado claro */
+    --accent-color: #406882;  /* Azul sóbrio */
 }
 
 [data-theme="dark"] {
-    --sidebar-bg: #1A1C1E;
-    --app-bg: #121212;
-    --white: #242629;
-    --text-main: #E2E8F0;
-    --text-muted: #A0AEC0;
-    --border-color: #333;
+    --sidebar-bg: #15191E;
+    --app-bg: #0D1117;
+    --white: #1C2128;
+    --text-main: #E6EDF3;
+    --text-muted: #8B949E;
+    --border-color: #30363D;
+    /* Cards no Escuro */
+    --card-bg: #161B22;
+    --question-bg: #1C2D3F;   /* Azul petróleo pastel */
+    --answer-bg: #0D1117;
+    --comment-bg: #21262D;
+    --accent-color: #58A6FF;  /* Azul brilhante */
+}
+
+/* --- RESET GLOBAL --- */
+* { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; 
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -233,7 +253,7 @@ body {
 }
 
 .q-container {
-    background: var(--white);
+    background: #fffaf6 !important;
     border-radius: 24px;
     padding: 32px;
     border: 1px solid #edf2f7;
@@ -603,4 +623,109 @@ textarea {
         backdrop-filter: blur(8px);
         background: rgba(0,0,0,0.7);
     }
+}
+
+/* --- NOVAS VARIÁVEIS DE CORES PASTÉIS --- */
+:root {
+  --card-bg: #fffaf6;
+  --text-color: #2a2a2a;
+  --question-bg: #f3e6da;   /* bege bebê */
+  --answer-bg: #fdfcfb;     /* quase branco quente */
+  --comment-bg: #f6f1ec;
+  --accent-color: #d4a373;  /* caramelo suave */
+  --text-muted: #6b7280;
+}
+
+/* Integração com o seu Modo Escuro Manual */
+[data-theme="dark"] {
+  --card-bg: #1f2328;
+  --text-color: #f3f4f6;
+  --question-bg: #2f3b4a;   /* azul acinzentado pastel */
+  --answer-bg: #262b31;
+  --comment-bg: #2b3138;
+  --accent-color: #9bb8d7;  /* azul bebê */
+  --text-muted: #9ca3af;
+}
+
+/* Espaçamento em listas dentro das questões */
+.q-container ul li, .q-container ol li {
+  margin-bottom: 8px;
+  list-style-position: inside;
+}
+
+/* Container da Questão (Adaptado do seu .q-container para o estilo .card-container) */
+.q-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 28px;
+  border-radius: 20px;
+  max-width: 700px;
+  width: 90%;
+  margin: 20px auto; /* Centralização */
+
+  background-color: var(--card-bg);
+  color: var(--text-color);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.07);
+  border: none; /* Remove a borda antiga */
+
+  animation: fadeIn 0.6s ease-out;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* O Enunciado (Equivalente ao .question do seu reset) */
+.q-container .enunciado {
+  font-family: "Inter", "Plus Jakarta Sans", sans-serif;
+  font-size: 1.2rem;
+  font-weight: 400;
+  line-height: 1.6;
+  padding: 18px;
+  border-radius: 16px;
+  background-color: var(--question-bg);
+  color: inherit;
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Campo de Fonte */
+.q-container .fonte {
+  font-size: 0.9rem;
+  text-align: right;
+  font-style: italic;
+  margin-top: 6px;
+  color: var(--text-muted);
+}
+
+/* Comentário (Revelado após resposta) */
+.comentario {
+  display: none; /* JS controla a exibição */
+  background-color: var(--comment-bg);
+  padding: 14px 16px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-style: italic;
+  color: var(--text-color);
+  border-left: 4px solid var(--accent-color);
+  margin-top: 15px;
+  animation: fadeIn 0.8s ease-out;
+}
+
+.show-comment {
+  display: block !important;
+}
+
+/* Ajuste nas alternativas para combinar com o novo estilo */
+.opt-btn {
+  background-color: var(--answer-bg);
+  color: var(--text-color);
+  border: 1px solid rgba(0,0,0,0.05);
+  font-size: 1.1rem;
+  padding: 18px;
+  border-radius: 16px;
+  transition: all 0.2s;
+}
+
+/* Animações */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
