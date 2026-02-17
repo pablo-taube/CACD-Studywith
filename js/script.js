@@ -158,6 +158,7 @@ async function processQuestions() {
 }
 
 function renderizarSimulado(estilo) {
+    function renderizarSimulado(estilo) {
     const container = document.getElementById('questions-render');
     if (!container) return;
     container.innerHTML = "";
@@ -166,6 +167,22 @@ function renderizarSimulado(estilo) {
         const wrapper = document.createElement('div');
         wrapper.className = "q-container";
         wrapper.dataset.questaoId = qObj.id; 
+
+        // Lógica de Extração Híbrida (Coluna do Banco OU HTML legado)
+        let gabaritoFinal = qObj.gabarito ? qObj.gabarito.toLowerCase().trim() : "";
+        
+        // Se a coluna do banco estiver vazia, tenta extrair do HTML
+        if (!gabaritoFinal || gabaritoFinal === "") {
+            const temp = document.createElement('div');
+            temp.innerHTML = qObj.enunciado + (qObj.comentario || "");
+            const gabEl = temp.querySelector('.gabarito');
+            if (gabEl) {
+                const text = gabEl.innerText.toLowerCase();
+                if (text.includes('certo') || text === 'c') gabaritoFinal = 'c';
+                else if (text.includes('errado') || text === 'e') gabaritoFinal = 'e';
+                else gabaritoFinal = text.match(/[a-e]/) ? text.match(/[a-e]/)[0] : "a";
+            }
+        }
 
         wrapper.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -180,11 +197,12 @@ function renderizarSimulado(estilo) {
             <div class="enunciado" id="enunciado-${qObj.id}">${qObj.enunciado}</div>
             <div class="fonte" style="margin-top: 10px; font-size: 0.8rem; opacity: 0.7;">${qObj.fonte || ""}</div>
             <div class="options-grid">
-                ${renderOptions(estilo, qObj.gabarito)}
+                ${renderOptions(estilo, gabaritoFinal)}
             </div>
         `;
         container.appendChild(wrapper);
     });
+}
 }
 
 function renderOptions(estilo, gabarito) {
@@ -222,7 +240,14 @@ async function check(btn, choice, correct, estilo) {
     if (qData?.comentario) {
         const commentDiv = document.createElement('div');
         commentDiv.className = "comentario show-comment";
-        commentDiv.innerHTML = qData.comentario;
+        
+        // Limpa a div gabarito do comentário antes de mostrar ao usuário
+        const tempComment = document.createElement('div');
+        tempComment.innerHTML = qData.comentario;
+        const gabInterno = tempComment.querySelector('.gabarito');
+        if (gabInterno) gabInterno.remove();
+        
+        commentDiv.innerHTML = tempComment.innerHTML;
         container.appendChild(commentDiv);
     }
 
