@@ -836,3 +836,45 @@ textarea {
     color: white !important;
     transform: translateY(-2px);
 }
+
+/* --- AJUSTE NO RESET DO BODY --- */
+body {
+    background-color: var(--app-bg);
+    color: var(--text-main);
+    display: flex;
+    min-height: 100vh; /* Alterado de height para min-height */
+    overflow-x: hidden; /* Permite scroll vertical, trava apenas horizontal */
+    overflow-y: auto; 
+    padding: 20px;
+}
+
+/* --- ADAPTAÇÃO PARA CELULAR (MOBILE REVISADO) --- */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+        display: block; /* Remove o flex do body no mobile para evitar esmagamento */
+        height: auto;
+        overflow-y: auto;
+    }
+
+    .main-content {
+        padding: 0 5px;
+        margin-top: 80px; 
+        overflow-y: visible; /* Libera a rolagem para o body */
+        display: block;
+        height: auto;
+    }
+
+    /* Container de questões deve ocupar largura total sem travas */
+    .questoes-lista-total {
+        width: 100%;
+        display: block;
+        padding-bottom: 120px; /* Espaço para o timer não cobrir a última questão */
+    }
+
+    .q-container {
+        width: 100% !important;
+        max-width: none;
+        margin: 15px 0;
+    }
+}

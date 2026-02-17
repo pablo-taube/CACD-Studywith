@@ -158,7 +158,6 @@ async function processQuestions() {
 }
 
 function renderizarSimulado(estilo) {
-    function renderizarSimulado(estilo) {
     const container = document.getElementById('questions-render');
     if (!container) return;
     container.innerHTML = "";
@@ -202,7 +201,6 @@ function renderizarSimulado(estilo) {
         `;
         container.appendChild(wrapper);
     });
-}
 }
 
 function renderOptions(estilo, gabarito) {
