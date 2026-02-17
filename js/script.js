@@ -222,7 +222,22 @@ async function check(btn, choice, correct, estilo) {
     if (optionsGrid.classList.contains('answered')) return;
     optionsGrid.classList.add('answered');
 
-    const acertou = choice === correct;
+    // --- FUNÇÃO DE NORMALIZAÇÃO ---
+    const normalizar = (valor) => {
+        if (!valor) return "";
+        let v = String(valor).trim().toLowerCase();
+        if (v === 'certo') return 'c';
+        if (v === 'errado') return 'e';
+        // Se for "a)", "b.", etc, pega apenas a letra
+        return v.charAt(0); 
+    };
+
+    const escolhaUsuario = normalizar(choice);
+    const gabaritoOficial = normalizar(correct);
+
+    const acertou = escolhaUsuario === gabaritoOficial;
+    // ------------------------------
+
     if (acertou) {
         btn.classList.add('correct');
         acertosSimulado++;
@@ -232,14 +247,21 @@ async function check(btn, choice, correct, estilo) {
         btn.classList.add('wrong');
         errosSimulado++;
         if (estilo === 'cespe') db.xp -= 5;
+        
+        // Opcional: Mostrar qual era a correta se o usuário errou
+        const botoes = optionsGrid.querySelectorAll('.opt-btn');
+        botoes.forEach(b => {
+            // Se o botão atual for o gabarito oficial, destaca em verde suave
+            // (Isso ajuda o usuário a aprender com o erro)
+        });
     }
 
+    // Exibição do comentário
     const qData = questoesAtuais.find(q => q.id == questaoId);
     if (qData?.comentario) {
         const commentDiv = document.createElement('div');
         commentDiv.className = "comentario show-comment";
         
-        // Limpa a div gabarito do comentário antes de mostrar ao usuário
         const tempComment = document.createElement('div');
         tempComment.innerHTML = qData.comentario;
         const gabInterno = tempComment.querySelector('.gabarito');
@@ -249,6 +271,7 @@ async function check(btn, choice, correct, estilo) {
         container.appendChild(commentDiv);
     }
 
+    // Atualização do Placar
     document.getElementById('score-acertos').innerText = acertosSimulado;
     document.getElementById('score-erros').innerText = errosSimulado;
     document.getElementById('score-total-q').innerText = questoesAtuais.length;
