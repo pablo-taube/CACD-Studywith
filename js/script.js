@@ -226,69 +226,29 @@ function renderOptions(estilo, gabarito) {
 }
 
 async function check(btn, choice, correct, estilo) {
-    const container = btn.closest('.q-container');
-    const optionsGrid = btn.parentElement;
-    const questaoId = container.dataset.questaoId;
-
-    if (optionsGrid.classList.contains('answered')) return;
-    optionsGrid.classList.add('answered');
-
-    // --- FUNÇÃO DE NORMALIZAÇÃO ---
-    const normalizar = (valor) => {
-        if (!valor) return "";
-        let v = String(valor).trim().toLowerCase();
-        if (v === 'certo') return 'c';
-        if (v === 'errado') return 'e';
-        // Se for "a)", "b.", etc, pega apenas a letra
-        return v.charAt(0); 
-    };
-
-    const escolhaUsuario = normalizar(choice);
-    const gabaritoOficial = normalizar(correct);
-
+    // ... (mantenha sua lógica de normalização e classes correct/wrong igual) ...
     const acertou = escolhaUsuario === gabaritoOficial;
-    // ------------------------------
+    const qData = questoesAtuais.find(q => q.id == questaoId);
+    const xp_ganho = acertou ? 10 : (estilo === 'cespe' ? -5 : 0);
 
-    if (acertou) {
-        btn.classList.add('correct');
-        acertosSimulado++;
-        db.acertos++;
-        db.xp += 10;
-    } else {
-        btn.classList.add('wrong');
-        errosSimulado++;
-        if (estilo === 'cespe') db.xp -= 5;
-        
-        // Opcional: Mostrar qual era a correta se o usuário errou
-        const botoes = optionsGrid.querySelectorAll('.opt-btn');
-        botoes.forEach(b => {
-            // Se o botão atual for o gabarito oficial, destaca em verde suave
-            // (Isso ajuda o usuário a aprender com o erro)
+    // SALVAR LOG NO BANCO
+    if (currentSession) {
+        await supabaseClient.from('resolucoes').insert({
+            user_id: currentSession.user.id,
+            materia: qData.materia,
+            acertou: acertou,
+            xp_ganho: xp_ganho
         });
     }
 
-    // Exibição do comentário
-    const qData = questoesAtuais.find(q => q.id == questaoId);
-    if (qData?.comentario) {
-        const commentDiv = document.createElement('div');
-        commentDiv.className = "comentario show-comment";
-        
-        const tempComment = document.createElement('div');
-        tempComment.innerHTML = qData.comentario;
-        const gabInterno = tempComment.querySelector('.gabarito');
-        if (gabInterno) gabInterno.remove();
-        
-        commentDiv.innerHTML = tempComment.innerHTML;
-        container.appendChild(commentDiv);
+    // Atualizar estado local (mantenha o restante da sua função original)
+    if (acertou) { 
+        acertosSimulado++; db.acertos++; db.xp += 10; 
+    } else { 
+        errosSimulado++; if (estilo === 'cespe') db.xp -= 5; 
     }
-
-    // Atualização do Placar
-    document.getElementById('score-acertos').innerText = acertosSimulado;
-    document.getElementById('score-erros').innerText = errosSimulado;
-    document.getElementById('score-total-q').innerText = questoesAtuais.length;
-
     saveDB();
-    if (questaoId) await updateQuestaoStats(questaoId, acertou);
+    // ...
 }
 
 async function updateQuestaoStats(id, acertou) {
@@ -389,14 +349,147 @@ function toggleConfig() {
     document.getElementById('accordion-icon').innerText = panel.classList.contains('collapsed') ? '▼' : '▲';
 }
 
-function updateDashboard() {
-    const total = db.total_questoes || 0;
-    const accuracy = total > 0 ? Math.round((db.acertos / total) * 100) + "%" : "0%";
-    const setText = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
-    setText('stat-total-q', total);
-    setText('stat-accuracy', accuracy);
-    setText('stat-flash', db.flashcards || 0);
-    setText('stat-xp', db.xp || 0);
+let meuGrafico = null;
+let dadosResolucoes = [];
+
+async function updateDashboard() {
+    if (!currentSession) return;
+
+    // Buscar resoluções do usuário
+    const { data, error } = await supabaseClient
+        .from('resolucoes')
+        .select('*')
+        .eq('user_id', currentSession.user.id);
+
+    if (error) return;
+    dadosResolucoes = data;
+
+    const hoje = new Date().toISOString().split('T')[0];
+    const deHoje = data.filter(r => r.data === hoje);
+
+    // 1. Widgets do Dia
+    const totalHoje = deHoje.length;
+    const acertosHoje = deHoje.filter(r => r.acertou).length;
+    const xpHoje = deHoje.reduce((acc, r) => acc + r.xp_ganho, 0);
+
+    document.getElementById('stat-total-q').innerText = totalHoje;
+    document.getElementById('stat-accuracy').innerText = totalHoje > 0 ? Math.round((acertosHoje/totalHoje)*100) + "%" : "0%";
+    document.getElementById('stat-xp').innerText = xpHoje;
+    document.getElementById('stat-flash').innerText = db.flashcards || 0;
+
+    // 2. Renderizar Gráfico e Ranking
+    renderizarGraficoSemanal(data);
+    renderizarRanking();
+}
+
+function renderizarGraficoSemanal(data) {
+    const ctx = document.getElementById('chartSemanal').getContext('2d');
+    const diasLabels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+    
+    // Identificar a Segunda-Feira da semana atual
+    const hoje = new Date();
+    const diaDaSemana = hoje.getDay(); // 0 (Dom) a 6 (Sáb)
+    const diffParaSegunda = hoje.getDate() - diaDaSemana + (diaDaSemana === 0 ? -6 : 1);
+    const segundaFeira = new Date(hoje.setDate(diffParaSegunda));
+    segundaFeira.setHours(0, 0, 0, 0);
+
+    const acertosData = [0, 0, 0, 0, 0, 0, 0];
+    const errosData = [0, 0, 0, 0, 0, 0, 0];
+
+    // Mapear dados do banco para os índices do gráfico (0=Seg, 6=Dom)
+    data.forEach(res => {
+        const dataRes = new Date(res.data + "T00:00:00");
+        if (dataRes >= segundaFeira) {
+            const diffDias = Math.floor((dataRes - segundaFeira) / (1000 * 60 * 60 * 24));
+            if (diffDias >= 0 && diffDias < 7) {
+                if (res.acertou) acertosData[diffDias]++;
+                else errosData[diffDias]++;
+            }
+        }
+    });
+
+    if (meuGrafico) meuGrafico.destroy();
+    meuGrafico = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: diasLabels,
+            datasets: [
+                { 
+                    label: 'Acertos', 
+                    data: acertosData, 
+                    borderColor: '#25614D', 
+                    backgroundColor: 'rgba(37, 97, 77, 0.1)',
+                    fill: true,
+                    tension: 0.4 
+                },
+                { 
+                    label: 'Erros', 
+                    data: errosData, 
+                    borderColor: '#e74c3c', 
+                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                    fill: true,
+                    tension: 0.4 
+                }
+            ]
+        },
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false, // IMPORTANTE: Mantém a altura dentro do container
+            resizeDelay: 200, // Evita cálculos excessivos durante redimensionamento
+            plugins: { 
+                legend: { display: false } 
+            },
+            scales: { 
+                y: { 
+                    beginAtZero: true, 
+                    suggestedMax: 10, // Define um topo inicial para o gráfico não ficar achatado
+                    ticks: { stepSize: 1 } 
+                } 
+            }
+        }
+    });
+}
+
+function renderizarRanking() {
+    const periodo = document.getElementById('rank-periodo').value;
+    const lista = document.getElementById('ranking-list');
+    if (!lista) return;
+
+    let dadosFiltrados = dadosResolucoes;
+
+    if (periodo === 'semana') {
+        const hoje = new Date();
+        const diaDaSemana = hoje.getDay();
+        const diffParaSegunda = hoje.getDate() - diaDaSemana + (diaDaSemana === 0 ? -6 : 1);
+        const segundaFeira = new Date(hoje.setDate(diffParaSegunda));
+        segundaFeira.setHours(0, 0, 0, 0);
+
+        dadosFiltrados = dadosResolucoes.filter(r => new Date(r.data + "T00:00:00") >= segundaFeira);
+    }
+
+    const stats = dadosFiltrados.reduce((acc, r) => {
+        if (!acc[r.materia]) acc[r.materia] = { q: 0, xp: 0 };
+        acc[r.materia].q++;
+        acc[r.materia].xp += (r.xp_ganho || 0);
+        return acc;
+    }, {});
+
+    const ordenado = Object.entries(stats)
+        .sort((a, b) => b[1].xp - a[1].xp) // Ordena por XP
+        .slice(0, 5);
+
+    lista.innerHTML = ordenado.length > 0 ? ordenado.map(([materia, info]) => `
+        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-card-alt); padding: 12px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.05);">
+            <div style="overflow: hidden;">
+                <div style="font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${materia}</div>
+                <div style="font-size: 11px; color: var(--text-muted);">${info.q} questões resolvidas</div>
+            </div>
+            <div style="text-align: right; min-width: 60px;">
+                <span style="color: #25614D; font-weight: 800; font-size: 14px;">${info.xp}</span>
+                <small style="font-size: 9px; color: var(--text-muted);">XP</small>
+            </div>
+        </div>
+    `).join('') : '<p style="font-size:12px; color:var(--text-muted); text-align:center;">Nenhuma atividade no período.</p>';
 }
 
 function highlightActiveMenu() {

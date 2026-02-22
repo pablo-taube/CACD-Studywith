@@ -84,7 +84,12 @@
         <div class="menu-label">General</div>
         <div class="menu-item">⚙️ Settings</div>
         <div class="menu-item" onclick="clearData()" style="cursor:pointer">🧹 Resetar Banco</div>
+        
     </div>
+
+      <div id="sync-indicator" class="sync-status offline">
+                <span id="sync-icon">☁️</span> <span id="sync-text">Offline</span>
+            </div>
     
     <button class="theme-switch" onclick="toggleTheme()" id="theme-toggle">
         <span id="theme-text">Modo Escuro</span>
@@ -92,43 +97,59 @@
     </button>
 </aside>
 
-    <main class="main-content">
-        <header class="topbar">
-            <div class="search-bar">
-                <input type="text" placeholder="Pesquisar métricas...">
-            </div>
-            
-            <div class="user-info">
-                <div class="user-text" style="text-align: right;">
-                    <p style="font-weight: 700; font-size: 14px; margin: 0;">Pablo</p>
-                    <p style="font-size: 11px; color: var(--text-muted); margin: 0;">No Plan</p>
-                </div>
-                <img src="https://ui-avatars.com/api/?name=Pablo&background=25614D&color=fff" class="avatar">
-            </div>
+<main class="main-content">
+    <header class="topbar">
         </header>
 
-        <h1 style="margin-bottom: 24px;">Visão Geral</h1>
-        
-        <div class="stats-grid">
-            <div class="card featured">
-                <h3>Total Questões</h3>
-                <h1 id="stat-total-q">0</h1>
-            </div>
-            <div class="card">
-                <h3>Acertos</h3>
-                <h1 id="stat-accuracy">0%</h1>
-            </div>
-            <div class="card">
-                <h3>Flashcards</h3>
-                <h1 id="stat-flash">0</h1>
-            </div>
-            <div class="card">
-                <h3>Pontos XP</h3>
-                <h1 id="stat-xp">0</h1>
-            </div>
+    <h1 style="margin-bottom: 24px;">Visão Geral (Hoje)</h1>
+    
+    <div class="stats-grid">
+        <div class="card featured">
+            <h3>Questões Hoje</h3>
+            <h1 id="stat-total-q">0</h1>
         </div>
-    </main>
+        <div class="card">
+            <h3>Acertos Hoje</h3>
+            <h1 id="stat-accuracy">0%</h1>
+        </div>
+        <div class="card">
+            <h3>Flashcards</h3>
+            <h1 id="stat-flash">0</h1>
+        </div>
+        <div class="card">
+            <h3>XP Hoje</h3>
+            <h1 id="stat-xp">0</h1>
+        </div>
+    </div>
 
+<div class="metrics-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-top: 24px; align-items: start;">
+    
+    <div class="card" style="height: 400px; display: flex; flex-direction: column; margin: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin:0">Desempenho Semanal</h3>
+            <small style="color: var(--text-muted)">Segunda a Domingo</small>
+        </div>
+        <div style="flex: 1; position: relative; min-height: 0;">
+            <canvas id="chartSemanal"></canvas>
+        </div>
+    </div>
+
+    <div class="card" style="min-height: 400px; margin: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin:0">Ranking</h3>
+            <select id="rank-periodo" class="opt-btn" style="padding: 6px 12px; font-size: 11px; border-radius: 8px;" onchange="renderizarRanking()">
+                <option value="semana">Semana Atual</option>
+                <option value="global">Histórico Global</option>
+            </select>
+        </div>
+        <div id="ranking-list" style="display: flex; flex-direction: column; gap: 12px;">
+            </div>
+    </div>
+</div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="./js/script.js"></script>
 </body>
 </html>
