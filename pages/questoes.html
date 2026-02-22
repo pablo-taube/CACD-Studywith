@@ -89,8 +89,11 @@
                         <select id="select-materia" class="opt-btn">
                             <option value="">-- Carregando matérias... --</option>
                         </select>
-                        <input type="text" id="set-assunto" placeholder="Assunto (ex: Crase)" class="opt-btn">
-                    </div>
+<div style="position: relative;">
+    <input type="text" id="set-assunto" placeholder="Assunto (ex: Crase)" class="opt-btn" list="assuntos-sugeridos" style="width: 100%;">
+    <datalist id="assuntos-sugeridos">
+        </datalist>
+</div>                    </div>
 
                     <button onclick="processQuestions()" class="btn-primary" style="width: 100%; margin-top: 15px;">Gerar Simulado Filtrado</button>
                 </div>

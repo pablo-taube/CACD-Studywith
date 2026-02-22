@@ -101,25 +101,36 @@ async function fetchRemoteDB() {
 /* --- 4. CONTROLE DE SIMULADO --- */
 async function carregarMateriasDisponiveis() {
     const selectMateria = document.getElementById('select-materia');
+    const datalistAssunto = document.getElementById('assuntos-sugeridos');
     if (!selectMateria) return;
 
     try {
-        const { data, error } = await supabaseClient.from('questoes').select('materia');
+        // Busca matérias e assuntos simultaneamente
+        const { data, error } = await supabaseClient.from('questoes').select('materia, assunto');
         if (error) throw error;
 
-        const materiasUnicas = [...new Set(data.map(item => item.materia))].sort();
+        // Processar Matérias
+        const materiasUnicas = [...new Set(data.map(item => item.materia))].filter(Boolean).sort();
         selectMateria.innerHTML = '<option value="">-- Todas as Matérias --</option>';
-        
         materiasUnicas.forEach(materia => {
-            if (materia) {
-                const option = document.createElement('option');
-                option.value = materia;
-                option.textContent = materia;
-                selectMateria.appendChild(option);
-            }
+            const option = document.createElement('option');
+            option.value = materia;
+            option.textContent = materia;
+            selectMateria.appendChild(option);
         });
+
+        // Processar Assuntos (para o Datalist)
+        if (datalistAssunto) {
+            const assuntosUnicos = [...new Set(data.map(item => item.assunto))].filter(Boolean).sort();
+            datalistAssunto.innerHTML = '';
+            assuntosUnicos.forEach(assunto => {
+                const option = document.createElement('option');
+                option.value = assunto;
+                datalistAssunto.appendChild(option);
+            });
+        }
     } catch (err) {
-        console.error("Erro ao carregar matérias:", err);
+        console.error("Erro ao carregar filtros:", err);
     }
 }
 
