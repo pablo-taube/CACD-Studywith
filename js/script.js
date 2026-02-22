@@ -226,29 +226,69 @@ function renderOptions(estilo, gabarito) {
 }
 
 async function check(btn, choice, correct, estilo) {
-    // ... (mantenha sua lógica de normalização e classes correct/wrong igual) ...
+    const container = btn.closest('.q-container');
+    const optionsGrid = btn.parentElement;
+    const questaoId = container.dataset.questaoId; // Recupera o ID do atributo data
+
+    if (optionsGrid.classList.contains('answered')) return;
+    optionsGrid.classList.add('answered');
+
+    // --- FUNÇÃO DE NORMALIZAÇÃO ---
+    const normalizar = (valor) => {
+        if (!valor) return "";
+        let v = String(valor).trim().toLowerCase();
+        if (v === 'certo') return 'c';
+        if (v === 'errado') return 'e';
+        return v.charAt(0); 
+    };
+
+    const escolhaUsuario = normalizar(choice);
+    const gabaritoOficial = normalizar(correct);
     const acertou = escolhaUsuario === gabaritoOficial;
+
+    // Localizar dados da questão para XP e Matéria
     const qData = questoesAtuais.find(q => q.id == questaoId);
     const xp_ganho = acertou ? 10 : (estilo === 'cespe' ? -5 : 0);
 
-    // SALVAR LOG NO BANCO
-    if (currentSession) {
+    // Feedback Visual
+    if (acertou) {
+        btn.classList.add('correct');
+        acertosSimulado++;
+        db.acertos++;
+        db.xp += 10;
+    } else {
+        btn.classList.add('wrong');
+        errosSimulado++;
+        if (estilo === 'cespe') db.xp -= 5;
+    }
+
+    // SALVAR LOG NO BANCO (Atividade Diária)
+    if (currentSession && qData) {
         await supabaseClient.from('resolucoes').insert({
             user_id: currentSession.user.id,
-            materia: qData.materia,
+            materia: qData.materia || "Geral",
             acertou: acertou,
-            xp_ganho: xp_ganho
+            xp_ganho: xp_ganho,
+            data: new Date().toISOString().split('T')[0]
         });
     }
 
-    // Atualizar estado local (mantenha o restante da sua função original)
-    if (acertou) { 
-        acertosSimulado++; db.acertos++; db.xp += 10; 
-    } else { 
-        errosSimulado++; if (estilo === 'cespe') db.xp -= 5; 
+    // Exibição do comentário (se houver)
+    if (qData?.comentario) {
+        const commentDiv = document.createElement('div');
+        commentDiv.className = "comentario show-comment";
+        commentDiv.innerHTML = qData.comentario;
+        container.appendChild(commentDiv);
     }
+
+    // Atualização do Placar Local
+    const elAcertos = document.getElementById('score-acertos');
+    const elErros = document.getElementById('score-erros');
+    if (elAcertos) elAcertos.innerText = acertosSimulado;
+    if (elErros) elErros.innerText = errosSimulado;
+
     saveDB();
-    // ...
+    if (questaoId) await updateQuestaoStats(questaoId, acertou);
 }
 
 async function updateQuestaoStats(id, acertou) {
