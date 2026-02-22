@@ -143,6 +143,9 @@ async function check(btn, choice, correct, estilo) {
             xp_ganho: acertou ? 10 : (estilo === 'cespe' ? -5 : 0),
             data: new Date().toISOString().split('T')[0]
         });
+
+        // ... dentro da função check, após o supabaseClient.from('resolucoes').insert()
+await atualizarWidgetsProgresso(); // Adicione esta linha no final do bloco 'if (currentSession)'
     }
 
     if (qData?.comentario) {
@@ -257,3 +260,83 @@ function updateTimerDisplay() {
     const format = (num) => String(num).padStart(2, '0');
     clock.innerText = `${format(hrs)}:${format(mins)}:${format(secs)}`;
 }
+
+/* --- 6. ATUALIZAÇÃO DE DASHBOARD E WIDGETS --- */
+
+async function atualizarWidgetsProgresso() {
+    if (!currentSession) return;
+
+    const hoje = new Date().toISOString().split('T')[0];
+    
+    try {
+        // 1. Buscar Acertos de Hoje
+        const { data: resolucoesHoje, error: errHoje } = await supabaseClient
+            .from('resolucoes')
+            .select('acertou')
+            .eq('user_id', currentSession.user.id)
+            .eq('data', hoje);
+
+        if (!errHoje && resolucoesHoje) {
+            const totalAcertos = resolucoesHoje.filter(r => r.acertou).length;
+            const elementAcertos = document.getElementById('widget-acertos-hoje');
+            if (elementAcertos) elementAcertos.innerText = totalAcertos;
+        }
+
+        // 2. Buscar Ranking de Disciplinas (Top 5)
+        const { data: todasResolucoes, error: errRank } = await supabaseClient
+            .from('resolucoes')
+            .select('materia, acertou')
+            .eq('user_id', currentSession.user.id);
+
+        if (!errRank && todasResolucoes) {
+            const rankMap = {};
+            todasResolucoes.forEach(r => {
+                if (!rankMap[r.materia]) rankMap[r.materia] = { total: 0, acertos: 0 };
+                rankMap[r.materia].total++;
+                if (r.acertou) rankMap[r.materia].acertos++;
+            });
+
+            const rankingOrdenado = Object.entries(rankMap)
+                .map(([materia, stats]) => ({
+                    materia,
+                    precisao: Math.round((stats.acertos / stats.total) * 100)
+                }))
+                .sort((a, b) => b.precisao - a.precisao)
+                .slice(0, 5);
+
+            renderizarRankingDisciplinas(rankingOrdenado);
+        }
+    } catch (err) {
+        console.error("Erro ao atualizar widgets:", err);
+    }
+}
+
+function renderizarRankingDisciplinas(ranking) {
+    const container = document.getElementById('ranking-disciplinas-lista');
+    if (!container) return;
+
+    if (ranking.length === 0) {
+        container.innerHTML = '<p style="font-size:12px; color:var(--text-muted)">Sem dados suficientes.</p>';
+        return;
+    }
+
+    container.innerHTML = ranking.map(item => `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px;">
+            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">
+                ${item.materia}
+            </span>
+            <div style="display: flex; align-items: center; gap: 8px; flex: 1; justify-content: flex-end;">
+                <div style="width: 60px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                    <div style="width: ${item.precisao}%; height: 100%; background: var(--accent-color);"></div>
+                </div>
+                <span style="font-weight: bold; min-width: 35px; text-align: right;">${item.precisao}%</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Chamar ao carregar a página e após cada resposta
+document.addEventListener('DOMContentLoaded', () => {
+    // Timeout pequeno para garantir que a sessão foi carregada pelo auth.js
+    setTimeout(atualizarWidgetsProgresso, 1500);
+});

@@ -79,3 +79,97 @@ function renderizarGraficoSemanal(data) {
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     });
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Aguarda um momento para o auth.js carregar a sessão
+    setTimeout(inicializarDashboard, 1000);
+});
+
+async function inicializarDashboard() {
+    if (!currentSession) return;
+
+    const { data: resolucoes, error } = await supabaseClient
+        .from('resolucoes')
+        .select('*')
+        .eq('user_id', currentSession.user.id);
+
+    if (error) {
+        console.error("Erro ao carregar dados:", error);
+        return;
+    }
+
+    atualizarStatsHoje(resolucoes);
+    gerarGraficoSemanal(resolucoes);
+    renderizarRanking(resolucoes);
+}
+
+// 1. Atualiza os cards superiores (Questões, Acertos %, Flashcards, XP)
+function atualizarStatsHoje(dados) {
+    const hoje = new Date().toISOString().split('T')[0];
+    const resolucoesHoje = dados.filter(r => r.data === hoje);
+    
+    const totalQ = resolucoesHoje.length;
+    const acertos = resolucoesHoje.filter(r => r.acertou).length;
+    const precisao = totalQ > 0 ? Math.round((acertos / totalQ) * 100) : 0;
+    const xpTotal = resolucoesHoje.reduce((acc, curr) => acc + (curr.xp_ganho || 0), 0);
+
+    document.getElementById('stat-total-q').innerText = totalQ;
+    document.getElementById('stat-accuracy').innerText = `${precisao}%`;
+    document.getElementById('stat-xp').innerText = xpTotal;
+    
+    // Obs: stat-flash deve ser integrado com sua lógica de flashcards futuramente
+}
+
+// 3. Ranking de Disciplinas
+async function renderizarRanking(dadosPassados = null) {
+    let dados = dadosPassados;
+    
+    // Se a função for chamada pelo onchange do select, ela busca os dados novamente
+    if (!dados) {
+        const { data } = await supabaseClient
+            .from('resolucoes')
+            .select('*')
+            .eq('user_id', currentSession.user.id);
+        dados = data;
+    }
+
+    const periodo = document.getElementById('rank-periodo').value;
+    const container = document.getElementById('ranking-list');
+    if (!container || !dados) return;
+
+    // Filtro de Período
+    let dadosFiltrados = dados;
+    if (periodo === 'semana') {
+        const umaSemanaAtras = new Date();
+        umaSemanaAtras.setDate(umaSemanaAtras.getDate() - 7);
+        dadosFiltrados = dados.filter(r => new Date(r.data) >= umaSemanaAtras);
+    }
+
+    // Agrupar por Matéria
+    const rankingMap = {};
+    dadosFiltrados.forEach(r => {
+        if (!rankingMap[r.materia]) rankingMap[r.materia] = { total: 0, acertos: 0 };
+        rankingMap[r.materia].total++;
+        if (r.acertou) rankingMap[r.materia].acertos++;
+    });
+
+    const rankingFinal = Object.entries(rankingMap)
+        .map(([materia, stat]) => ({
+            materia,
+            precisao: Math.round((stat.acertos / stat.total) * 100),
+            total: stat.total
+        }))
+        .sort((a, b) => b.precisao - a.precisao);
+
+    container.innerHTML = rankingFinal.length ? rankingFinal.map(item => `
+        <div class="ranking-item" style="display:flex; flex-direction:column; gap:4px">
+            <div style="display:flex; justify-content:space-between; font-size:13px">
+                <span style="font-weight:600">${item.materia}</span>
+                <span style="color:var(--text-muted)">${item.precisao}% (${item.total} q.)</span>
+            </div>
+            <div style="width:100%; height:8px; background:rgba(0,0,0,0.05); border-radius:4px; overflow:hidden">
+                <div style="width:${item.precisao}%; height:100%; background:#25614D; border-radius:4px"></div>
+            </div>
+        </div>
+    `).join('') : '<p style="font-size:12px; color:var(--text-muted)">Nenhum dado no período.</p>';
+}
