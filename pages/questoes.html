@@ -1,171 +1,355 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Diplomatique | Questões</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../style/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../style/style.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-          <link rel="icon" type="image/x-icon" href="../assets/embassy.png">
-
-</head>
-<body>
-    
+    <link rel="icon" type="image/x-icon" href="../assets/embassy.png" />
+  </head>
+  <body>
     <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
-        <span id="hamburger-icon">☰</span>
+      <span id="hamburger-icon">☰</span>
     </button>
     <div class="sidebar-overlay" onclick="toggleMobileMenu()"></div>
 
     <div id="auth-modal" class="auth-overlay">
-        <div class="auth-card">
-            <div class="logo" style="justify-content: center; margin-bottom: 20px;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" stroke="#406882" stroke-width="4"/>
-                </svg>
-                Diplomatique
-            </div>
-            <h2 id="auth-title">Entrar na Nuvem</h2>
-            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Sincronize seu progresso no Supabase.</p>
-            
-            <input type="email" id="auth-email" placeholder="Seu e-mail" class="opt-btn" style="width: 100%; margin-bottom: 10px; padding: 12px;">
-            <input type="password" id="auth-password" placeholder="Sua senha" class="opt-btn" style="width: 100%; margin-bottom: 20px; padding: 12px;">
-            
-            <button onclick="handleAuth()" class="btn-primary" style="width: 100%; padding: 14px; margin-bottom: 10px;">Entrar</button>
-            <p style="font-size: 12px; cursor: pointer; color: var(--accent-color);" onclick="toggleAuthMode()" id="auth-toggle-text">Não tem conta? Cadastre-se</p>
-            <button onclick="closeAuthModal()" class="btn-mini-reset" style="margin-top: 15px; background: transparent; color: var(--text-muted);">Continuar Offline</button>
+      <div class="auth-card">
+        <div class="logo" style="justify-content: center; margin-bottom: 20px">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="#406882" stroke-width="4" />
+          </svg>
+          Diplomatique
         </div>
+        <h2 id="auth-title">Entrar na Nuvem</h2>
+        <p
+          style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px"
+        >
+          Sincronize seu progresso no Supabase.
+        </p>
+
+        <input
+          type="email"
+          id="auth-email"
+          placeholder="Seu e-mail"
+          class="opt-btn"
+          style="width: 100%; margin-bottom: 10px; padding: 12px"
+        />
+        <input
+          type="password"
+          id="auth-password"
+          placeholder="Sua senha"
+          class="opt-btn"
+          style="width: 100%; margin-bottom: 20px; padding: 12px"
+        />
+
+        <button
+          onclick="handleAuth()"
+          class="btn-primary"
+          style="width: 100%; padding: 14px; margin-bottom: 10px"
+        >
+          Entrar
+        </button>
+        <p
+          style="font-size: 12px; cursor: pointer; color: var(--accent-color)"
+          onclick="toggleAuthMode()"
+          id="auth-toggle-text"
+        >
+          Não tem conta? Cadastre-se
+        </p>
+        <button
+          onclick="closeAuthModal()"
+          class="btn-mini-reset"
+          style="
+            margin-top: 15px;
+            background: transparent;
+            color: var(--text-muted);
+          "
+        >
+          Continuar Offline
+        </button>
+      </div>
     </div>
 
     <aside class="sidebar" id="sidebar">
-        <div class="logo">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="#406882" stroke-width="4"/>
-            </svg>
-            Diplomatique
-        </div>
+      <div class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="#406882" stroke-width="4" />
+        </svg>
+        Diplomatique
+      </div>
 
-        <div class="menu-group">
-            <div class="menu-label">Menu</div>
-            <a href="../index.html" class="menu-item">📊 Dashboard</a>
-            <a href="revisao.html" class="menu-item">📘 Revisão</a>
-            <a href="flashcards.html" class="menu-item">🧠 Flashcards</a>
-            <a href="questoes.html" class="menu-item active">📝 Questões</a>
-        </div>
+      <div class="menu-group">
+        <div class="menu-label">Menu</div>
+        <a href="../index.html" class="menu-item">📊 Dashboard</a>
+        <a href="revisao.html" class="menu-item">📘 Revisão</a>
+        <a href="flashcards.html" class="menu-item">🧠 Flashcards</a>
+        <a href="questoes.html" class="menu-item active">📝 Questões</a>
+      </div>
 
-        <div class="menu-group" style="margin-top:auto">
-            <div class="menu-label">General</div>
-            <div class="menu-item" onclick="supabaseClient.auth.signOut().then(() => location.reload())">🚪 Sair da Conta</div>
-            <div id="sync-indicator" class="sync-status offline">
-                <span id="sync-icon">☁️</span> <span id="sync-text">Offline</span>
-            </div>
+      <div class="menu-group" style="margin-top: auto">
+        <div class="menu-label">General</div>
+        <div
+          class="menu-item"
+          onclick="supabaseClient.auth.signOut().then(() => location.reload())"
+        >
+          🚪 Sair da Conta
         </div>
+      </div>
 
-        <button class="theme-switch" onclick="toggleTheme()" id="theme-toggle">
-            <span id="theme-text">Modo Escuro</span>
-            <div class="theme-icon" id="theme-icon">🌙</div>
-        </button>
+      <div id="sync-indicator" class="sync-status offline">
+        <span id="sync-icon">☁️</span> <span id="sync-text">Offline</span>
+      </div>
+
+      <button class="theme-switch" onclick="toggleTheme()" id="theme-toggle">
+        <span id="theme-text">Modo Escuro</span>
+        <div class="theme-icon" id="theme-icon">🌙</div>
+      </button>
     </aside>
 
     <main class="main-content">
-        <header class="topbar"></header>
-        <h1 style="margin-bottom: 20px;">Simulado Inteligente</h1>
+      <header class="topbar"></header>
+      <h1 style="margin-bottom: 20px">Simulado Inteligente</h1>
 
-        <div class="questoes-header-grid">
-            <div class="config-panel collapsed" id="config-panel">
-                <h2 onclick="toggleConfig()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 18px;">
-                    Configurar Simulado <span id="accordion-icon">▼</span>
-                </h2>
-                <div id="config-content">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
-                        <select id="set-estilo" class="opt-btn">
-                            <option value="cespe">CESPE (C/E)</option>
-                            <option value="fgv">FGV (A-E)</option>
-                        </select>
-                        <input type="number" id="set-limite" placeholder="Qtd. questões" class="opt-btn">
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
-                        <select id="select-materia" class="opt-btn">
-                            <option value="">-- Carregando matérias... --</option>
-                        </select>
-<div style="position: relative;">
-    <input type="text" id="set-assunto" placeholder="Assunto (ex: Crase)" class="opt-btn" list="assuntos-sugeridos" style="width: 100%;">
-    <datalist id="assuntos-sugeridos">
-        </datalist>
-</div>                    </div>
-
-                    <button onclick="processQuestions()" class="btn-primary" style="width: 100%; margin-top: 15px;">Gerar Simulado Filtrado</button>
-                </div>
+      <div class="questoes-header-grid">
+        <div class="config-panel collapsed" id="config-panel">
+          <h2
+            onclick="toggleConfig()"
+            style="
+              cursor: pointer;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              font-size: 18px;
+            "
+          >
+            Configurar Simulado <span id="accordion-icon">▼</span>
+          </h2>
+          <div id="config-content">
+            <div
+              style="
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                margin-top: 15px;
+              "
+            >
+              <select id="set-estilo" class="opt-btn">
+                <option value="cespe">CESPE (C/E)</option>
+                <option value="fgv">FGV (A-E)</option>
+              </select>
+              <input
+                type="number"
+                id="set-limite"
+                placeholder="Qtd. questões"
+                class="opt-btn"
+              />
             </div>
 
-            <div id="simulado-score-box" class="card-score-compact">
-                <div class="score-data" style="width: 100%;">
-                    <div class="score-main-val">
-                        <span id="score-acertos">0</span><small>/ <span id="score-total-q">0</span></small>
-                    </div>
-                    <div style="margin: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);"></div>
-                    <div class="score-details" style="display: flex; justify-content: space-between; align-items: center;">
-                        <span>Erros: <strong id="score-erros">0</strong></span>
-                        <button onclick="location.reload()" class="btn-mini-reset">Reset</button>
-                    </div>
-                </div>
+            <div
+              style="
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                margin-top: 10px;
+              "
+            >
+              <select id="select-materia" class="opt-btn">
+                <option value="">-- Carregando matérias... --</option>
+              </select>
+              <div style="position: relative">
+                <input
+                  type="text"
+                  id="set-assunto"
+                  placeholder="Assunto (ex: Crase)"
+                  class="opt-btn"
+                  list="assuntos-sugeridos"
+                  style="width: 100%"
+                />
+                <datalist id="assuntos-sugeridos"> </datalist>
+              </div>
             </div>
+
+            <button
+              onclick="processQuestions()"
+              class="btn-primary"
+              style="width: 100%; margin-top: 15px"
+            >
+              Gerar Simulado Filtrado
+            </button>
+          </div>
         </div>
 
-        <div id="questions-render" class="questoes-lista-total"></div>
+        <div id="simulado-score-box" class="card-score-compact">
+          <div class="score-data" style="width: 100%">
+            <div class="score-main-val">
+              <span id="score-acertos">0</span
+              ><small>/ <span id="score-total-q">0</span></small>
+            </div>
+            <div
+              style="
+                margin: 10px 0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+              "
+            ></div>
+            <div
+              class="score-details"
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              "
+            >
+              <span>Erros: <strong id="score-erros">0</strong></span>
+              <button onclick="location.reload()" class="btn-mini-reset">
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="questions-render" class="questoes-lista-total"></div>
     </main>
 
     <div class="timer-widget">
-        <p style="font-size: 10px; letter-spacing: 1px; margin-bottom: 5px;">TIMER</p>
-        <div class="timer-clock" id="clock">00:00:00</div>
-        <div style="display: flex; gap: 5px;">
-            <button onclick="toggleTimer()" id="btn-timer">Iniciar</button>
-            <button onclick="resetTimer()" style="background: #444;">Reset</button>
-        </div>
+      <p style="font-size: 10px; letter-spacing: 1px; margin-bottom: 5px">
+        TIMER
+      </p>
+      <div class="timer-clock" id="clock">00:00:00</div>
+      <div style="display: flex; gap: 5px">
+        <button onclick="toggleTimer()" id="btn-timer">Iniciar</button>
+        <button onclick="resetTimer()" style="background: #444">Reset</button>
+      </div>
     </div>
 
-    <div id="modal-editor" class="auth-overlay" style="z-index: 9999;">
-        <div class="auth-card" style="max-width: 600px; text-align: left; width: 90%;">
-            <h2 style="margin-bottom: 15px; font-size: 1.2rem;">✏️ Editar Questão</h2>
-            
-            <label style="font-size: 11px; color: var(--text-muted);">ENUNCIADO (HTML)</label>
-            <textarea id="edit-enunciado" style="height: 120px; width: 100%;"></textarea>
+    <div id="modal-editor" class="auth-overlay" style="z-index: 9999">
+      <div
+        class="auth-card"
+        style="max-width: 600px; text-align: left; width: 90%"
+      >
+        <h2 style="margin-bottom: 15px; font-size: 1.2rem">
+          ✏️ Editar Questão
+        </h2>
 
-            <label style="font-size: 11px; color: var(--text-muted); margin-top: 10px; display: block;">COMENTÁRIO</label>
-            <textarea id="edit-comentario" style="height: 80px; width: 100%;"></textarea>
+        <label style="font-size: 11px; color: var(--text-muted)"
+          >ENUNCIADO (HTML)</label
+        >
+        <textarea
+          id="edit-enunciado"
+          style="height: 120px; width: 100%"
+        ></textarea>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
-                <div>
-                    <label style="font-size: 11px; color: var(--text-muted);">MATÉRIA</label>
-                    <input type="text" id="edit-materia" class="opt-btn" style="width: 100%;">
-                </div>
-                <div>
-                    <label style="font-size: 11px; color: var(--text-muted);">ASSUNTO</label>
-                    <input type="text" id="edit-assunto" class="opt-btn" style="width: 100%;">
-                </div>
-            </div>
+        <label
+          style="
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 10px;
+            display: block;
+          "
+          >COMENTÁRIO</label
+        >
+        <textarea
+          id="edit-comentario"
+          style="height: 80px; width: 100%"
+        ></textarea>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
-                <div>
-                    <label style="font-size: 11px; color: var(--text-muted);">FONTE</label>
-                    <input type="text" id="edit-fonte" class="opt-btn" style="width: 100%;">
-                </div>
-                <div>
-                    <label style="font-size: 11px; color: var(--text-muted);">GABARITO</label>
-                    <input type="text" id="edit-gabarito" class="opt-btn" style="width: 100%;">
-                </div>
-            </div>
-
-            <input type="hidden" id="edit-id">
-
-            <div style="display: flex; gap: 10px; margin-top: 25px;">
-                <button onclick="salvarEdicaoCompleta()" class="btn-primary" style="flex: 1;">Salvar no Banco</button>
-                <button onclick="fecharEditor()" class="btn-mini-reset" style="background: rgba(0,0,0,0.05); color: var(--text-main);">Cancelar</button>
-            </div>
+        <div
+          style="
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+          "
+        >
+          <div>
+            <label style="font-size: 11px; color: var(--text-muted)"
+              >MATÉRIA</label
+            >
+            <input
+              type="text"
+              id="edit-materia"
+              class="opt-btn"
+              style="width: 100%"
+            />
+          </div>
+          <div>
+            <label style="font-size: 11px; color: var(--text-muted)"
+              >ASSUNTO</label
+            >
+            <input
+              type="text"
+              id="edit-assunto"
+              class="opt-btn"
+              style="width: 100%"
+            />
+          </div>
         </div>
+
+        <div
+          style="
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+          "
+        >
+          <div>
+            <label style="font-size: 11px; color: var(--text-muted)"
+              >FONTE</label
+            >
+            <input
+              type="text"
+              id="edit-fonte"
+              class="opt-btn"
+              style="width: 100%"
+            />
+          </div>
+          <div>
+            <label style="font-size: 11px; color: var(--text-muted)"
+              >GABARITO</label
+            >
+            <input
+              type="text"
+              id="edit-gabarito"
+              class="opt-btn"
+              style="width: 100%"
+            />
+          </div>
+        </div>
+
+        <input type="hidden" id="edit-id" />
+
+        <div style="display: flex; gap: 10px; margin-top: 25px">
+          <button
+            onclick="salvarEdicaoCompleta()"
+            class="btn-primary"
+            style="flex: 1"
+          >
+            Salvar no Banco
+          </button>
+          <button
+            onclick="fecharEditor()"
+            class="btn-mini-reset"
+            style="background: rgba(0, 0, 0, 0.05); color: var(--text-main)"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
     </div>
 
-    <script src="../js/script.js"></script>
-</body>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script src="../js/supabase-config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/charts.js"></script>
+    <script src="../js/questoes.js"></script>
+  </body>
 </html>
