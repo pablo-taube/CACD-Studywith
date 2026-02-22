@@ -340,3 +340,57 @@ document.addEventListener('DOMContentLoaded', () => {
     // Timeout pequeno para garantir que a sessão foi carregada pelo auth.js
     setTimeout(atualizarWidgetsProgresso, 1500);
 });
+
+/* --- NOVA FUNÇÃO: GERAR SIMULADO GERAL (CICLO) --- */
+async function gerarSimuladoGeral() {
+    const estilo = document.getElementById('set-estilo').value;
+    updateSyncUI('syncing');
+
+    try {
+        // Busca todas as questões do banco
+        const { data, error } = await supabaseClient.from('questoes').select('*');
+
+        if (error || !data?.length) {
+            alert("Erro ao buscar questões ou banco vazio.");
+            updateSyncUI('offline');
+            return;
+        }
+
+        // Agrupar questões por matéria
+        const agrupadoPorMateria = data.reduce((acc, q) => {
+            const mat = q.materia || "Sem Matéria";
+            if (!acc[mat]) acc[mat] = [];
+            acc[mat].push(q);
+            return acc;
+        }, {});
+
+        let listaFinal = [];
+
+        // Para cada matéria, embaralha e pega 5
+        for (const materia in agrupadoPorMateria) {
+            const sorteadas = agrupadoPorMateria[materia]
+                .sort(() => Math.random() - 0.5)
+                .slice(0, 5);
+            listaFinal = listaFinal.concat(sorteadas);
+        }
+
+        // Embaralha a lista final para não virem blocos seguidos de matérias
+        questoesAtuais = listaFinal.sort(() => Math.random() - 0.5);
+
+        // Resetar Placar
+        acertosSimulado = 0;
+        errosSimulado = 0;
+        document.getElementById('score-acertos').innerText = "0";
+        document.getElementById('score-erros').innerText = "0";
+        document.getElementById('score-total-q').innerText = questoesAtuais.length;
+
+        renderizarSimulado(estilo);
+        toggleConfig();
+        updateSyncUI('synced');
+        alert(`Simulado gerado com ${questoesAtuais.length} questões de ${Object.keys(agrupadoPorMateria).length} matérias.`);
+
+    } catch (err) {
+        console.error(err);
+        updateSyncUI('offline');
+    }
+}
