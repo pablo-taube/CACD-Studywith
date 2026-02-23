@@ -20,16 +20,36 @@ function renderizarGraficoSemanal(data) {
     const ctx = document.getElementById('chartSemanal')?.getContext('2d');
     if (!ctx) return;
 
-    const acertosData = [0,0,0,0,0,0,0];
-    const errosData = [0,0,0,0,0,0,0];
-    // ... Lógica de preenchimento dos arrays (mesma do seu código original)
+    const diasLabels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+    
+    // Calcula a segunda-feira da semana atual (Local)
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const diaDaSemana = hoje.getDay(); 
+    const diffParaSegunda = diaDaSemana === 0 ? -6 : 1 - diaDaSemana;
+    
+    const segundaFeira = new Date(hoje);
+    segundaFeira.setDate(hoje.getDate() + diffParaSegunda);
 
-    if (meuGrafico) meuGrafico.destroy();
-    meuGrafico = new Chart(ctx, {
-        type: 'line',
-        data: { /* ... seus dados ... */ },
-        options: { responsive: true, maintainAspectRatio: false }
+    const acertosData = [0, 0, 0, 0, 0, 0, 0];
+    const errosData = [0, 0, 0, 0, 0, 0, 0];
+
+    data.forEach(res => {
+        // Converte a string YYYY-MM-DD do banco para objeto Date local (meia-noite)
+        const partes = res.data.split('-');
+        const dataRes = new Date(partes[0], partes[1] - 1, partes[2]);
+        
+        // Verifica se está dentro da semana atual (Segunda 00:00 até Domingo 23:59)
+        const diffTempo = dataRes.getTime() - segundaFeira.getTime();
+        const diffDias = Math.round(diffTempo / (1000 * 60 * 60 * 24));
+
+        if (diffDias >= 0 && diffDias < 7) {
+            if (res.acertou) acertosData[diffDias]++;
+            else errosData[diffDias]++;
+        }
     });
+    
+    // ... resto do código do Chart.js (meuGrafico.destroy e new Chart)
 }
 
 function renderizarRanking() {
@@ -105,20 +125,22 @@ async function inicializarDashboard() {
 
 // 1. Atualiza os cards superiores (Questões, Acertos %, Flashcards, XP)
 function atualizarStatsHoje(dados) {
-    const hoje = new Date().toISOString().split('T')[0];
-    const resolucoesHoje = dados.filter(r => r.data === hoje);
+    // Captura a data local no formato YYYY-MM-DD sem interferência de fuso horário
+    const agora = new Date();
+    const hojeLocal = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
+    
+    const resolucoesHoje = dados.filter(r => r.data === hojeLocal);
     
     const totalQ = resolucoesHoje.length;
     const acertos = resolucoesHoje.filter(r => r.acertou).length;
     const precisao = totalQ > 0 ? Math.round((acertos / totalQ) * 100) : 0;
     const xpTotal = resolucoesHoje.reduce((acc, curr) => acc + (curr.xp_ganho || 0), 0);
 
-    document.getElementById('stat-total-q').innerText = totalQ;
-    document.getElementById('stat-accuracy').innerText = `${precisao}%`;
-    document.getElementById('stat-xp').innerText = xpTotal;
-    
+    if(document.getElementById('stat-total-q')) document.getElementById('stat-total-q').innerText = totalQ;
+    if(document.getElementById('stat-accuracy')) document.getElementById('stat-accuracy').innerText = `${precisao}%`;
+    if(document.getElementById('stat-xp')) document.getElementById('stat-xp').innerText = xpTotal;
+}   
     // Obs: stat-flash deve ser integrado com sua lógica de flashcards futuramente
-}
 
 // 3. Ranking de Disciplinas
 async function renderizarRanking(dadosPassados = null) {
