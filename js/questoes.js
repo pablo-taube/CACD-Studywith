@@ -1,4 +1,4 @@
-/* --- 1. CONFIGURAÇÃO E FILTROS --- */
+/* --- 1. CONFIGURAÇÃO E FILTROS (Lógica de Interface) --- */
 
 function toggleConfig() {
     const panel = document.getElementById('config-panel');
@@ -14,27 +14,44 @@ async function carregarMateriasDisponiveis() {
     if (!selectMateria) return;
 
     try {
-        const { data, error } = await supabaseClient.from('questoes').select('materia, assunto');
-        if (error) throw error;
+        // Agora consultamos a VIEW, que é leve e rápida
+        const { data, error } = await supabaseClient
+            .from('lista_filtros')
+            .select('*');
 
-        // Popular Matérias (Unicas e Ordenadas)
-        const materiasUnicas = [...new Set(data.map(item => item.materia))].filter(Boolean).sort();
+        if (error) throw error;
+        if (!data) return;
+
+        // Extrair Matérias Únicas da View
+        const materiasUnicas = [...new Set(data.map(item => item.materia?.trim()))]
+            .filter(Boolean)
+            .sort();
+
         selectMateria.innerHTML = '<option value="">-- Todas as Matérias --</option>';
         materiasUnicas.forEach(materia => {
             const option = document.createElement('option');
-            option.value = materia; option.textContent = materia;
+            option.value = materia;
+            option.textContent = materia;
             selectMateria.appendChild(option);
         });
 
-        // Popular Datalist de Assuntos para o Autocomplete
+        // Extrair Assuntos Únicos da View
         if (datalistAssunto) {
-            const assuntosUnicos = [...new Set(data.map(item => item.assunto))].filter(Boolean).sort();
-            datalistAssunto.innerHTML = assuntosUnicos.map(a => `<option value="${a}">`).join('');
+            const assuntosUnicos = [...new Set(data.map(item => item.assunto?.trim()))]
+                .filter(Boolean)
+                .sort();
+            
+            datalistAssunto.innerHTML = assuntosUnicos
+                .map(a => `<option value="${a}">`)
+                .join('');
         }
-    } catch (err) { console.error("Erro ao carregar filtros:", err); }
+
+    } catch (err) { 
+        console.error("Erro ao carregar filtros via View:", err); 
+    }
 }
 
-/* --- 2. GERAÇÃO DO SIMULADO --- */
+/* --- 2. GERAÇÃO DO SIMULADO (Lógica de Dados) --- */
 
 async function processQuestions() {
     const materia = document.getElementById('select-materia').value;
@@ -43,35 +60,97 @@ async function processQuestions() {
     const limite = parseInt(document.getElementById('set-limite').value) || 10;
     
     updateSyncUI('syncing');
+    
     try {
+        // Iniciamos a query na tabela principal
         let query = supabaseClient.from('questoes').select('*');
+        
+        // Aplicamos os filtros condicionais
         if (materia) query = query.eq('materia', materia);
         if (assunto) query = query.ilike('assunto', `%${assunto}%`);
 
-        const { data, error } = await query;
+        // AJUSTE CRÍTICO: .range(0, 9999) garante que o Supabase busque 
+        // além das primeiras 1000 linhas padrão.
+        const { data, error } = await query.range(0, 9999);
+
         if (error || !data?.length) {
             alert("Nenhuma questão encontrada com esses filtros.");
             updateSyncUI('offline');
             return;
         }
 
+        // Embaralhamos e aplicamos o limite de questões escolhido pelo usuário
         questoesAtuais = data.sort(() => Math.random() - 0.5).slice(0, limite);
         
-        // Resetar Placar do Simulado
+        // Resetar Placar do Simulado na Interface
         acertosSimulado = 0; 
+        errosSimulado = 0;
+        
+        const elAcertos = document.getElementById('score-acertos');
+        const elErros = document.getElementById('score-erros');
+        const elTotal = document.getElementById('score-total-q');
+
+        if (elAcertos) elAcertos.innerText = "0";
+        if (elErros) elErros.innerText = "0";
+        if (elTotal) elTotal.innerText = questoesAtuais.length;
+
+        // Renderização e Finalização
+        renderizarSimulado(estilo);
+        toggleConfig(); // Fecha o painel de configuração
+        updateSyncUI('synced');
+
+    } catch (err) { 
+        console.error("Erro ao processar questões:", err);
+        updateSyncUI('offline'); 
+    }
+}
+
+async function gerarSimuladoGeral() {
+    const estilo = document.getElementById('set-estilo').value;
+    updateSyncUI('syncing');
+
+    try {
+        const { data, error } = await supabaseClient.from('questoes').select('*');
+        if (error || !data?.length) {
+            alert("Erro ao buscar questões ou banco vazio.");
+            updateSyncUI('offline');
+            return;
+        }
+
+        const agrupadoPorMateria = data.reduce((acc, q) => {
+            const mat = q.materia || "Sem Matéria";
+            if (!acc[mat]) acc[mat] = [];
+            acc[mat].push(q);
+            return acc;
+        }, {});
+
+        let listaFinal = [];
+        for (const materia in agrupadoPorMateria) {
+            const sorteadas = agrupadoPorMateria[materia]
+                .sort(() => Math.random() - 0.5)
+                .slice(0, 5);
+            listaFinal = listaFinal.concat(sorteadas);
+        }
+
+        questoesAtuais = listaFinal.sort(() => Math.random() - 0.5);
+
+        acertosSimulado = 0;
         errosSimulado = 0;
         document.getElementById('score-acertos').innerText = "0";
         document.getElementById('score-erros').innerText = "0";
         document.getElementById('score-total-q').innerText = questoesAtuais.length;
 
         renderizarSimulado(estilo);
-        toggleConfig(); 
+        toggleConfig();
         updateSyncUI('synced');
-    } catch (err) { 
+        alert(`Simulado gerado com ${questoesAtuais.length} questões.`);
+    } catch (err) {
         console.error(err);
-        updateSyncUI('offline'); 
+        updateSyncUI('offline');
     }
 }
+
+/* --- 3. RENDERIZAÇÃO E CORREÇÃO --- */
 
 function renderizarSimulado(estilo) {
     const container = document.getElementById('questions-render');
@@ -109,8 +188,6 @@ function renderOptions(estilo, gabarito) {
     ).join('');
 }
 
-/* --- 3. CORREÇÃO E STATS --- */
-
 async function check(btn, choice, correct, estilo) {
     const container = btn.closest('.q-container');
     const optionsGrid = btn.parentElement;
@@ -143,9 +220,7 @@ async function check(btn, choice, correct, estilo) {
             xp_ganho: acertou ? 10 : (estilo === 'cespe' ? -5 : 0),
             data: new Date().toISOString().split('T')[0]
         });
-
-        // ... dentro da função check, após o supabaseClient.from('resolucoes').insert()
-await atualizarWidgetsProgresso(); // Adicione esta linha no final do bloco 'if (currentSession)'
+        await atualizarWidgetsProgresso(); 
     }
 
     if (qData?.comentario) {
@@ -159,6 +234,8 @@ await atualizarWidgetsProgresso(); // Adicione esta linha no final do bloco 'if 
     if (questaoId) updateQuestaoStats(questaoId, acertou);
 }
 
+/* --- 4. EDITOR E ESTATÍSTICAS --- */
+
 async function updateQuestaoStats(id, acertou) {
     if (!currentSession) return;
     const { data } = await supabaseClient.from('questoes').select('historico_respostas').eq('id', id).single();
@@ -169,8 +246,6 @@ async function updateQuestaoStats(id, acertou) {
         historico_respostas: hist.slice(0,3) 
     }).eq('id', id);
 }
-
-/* --- 4. EDITOR DE QUESTÕES --- */
 
 function abrirEditorQuestao(id) {
     const questao = questoesAtuais.find(q => q.id === id);
@@ -222,7 +297,72 @@ async function salvarEdicaoCompleta() {
     }
 }
 
-/* --- 5. SISTEMA DE TIMER --- */
+/* --- 5. DASHBOARD E WIDGETS --- */
+
+async function atualizarWidgetsProgresso() {
+    if (!currentSession) return;
+    const hoje = new Date().toISOString().split('T')[0];
+    
+    try {
+        const { data: resolucoesHoje, error: errHoje } = await supabaseClient
+            .from('resolucoes')
+            .select('acertou')
+            .eq('user_id', currentSession.user.id)
+            .eq('data', hoje);
+
+        if (!errHoje && resolucoesHoje) {
+            const totalAcertos = resolucoesHoje.filter(r => r.acertou).length;
+            const elementAcertos = document.getElementById('widget-acertos-hoje');
+            if (elementAcertos) elementAcertos.innerText = totalAcertos;
+        }
+
+        const { data: todasResolucoes, error: errRank } = await supabaseClient
+            .from('resolucoes')
+            .select('materia, acertou')
+            .eq('user_id', currentSession.user.id);
+
+        if (!errRank && todasResolucoes) {
+            const rankMap = {};
+            todasResolucoes.forEach(r => {
+                if (!rankMap[r.materia]) rankMap[r.materia] = { total: 0, acertos: 0 };
+                rankMap[r.materia].total++;
+                if (r.acertou) rankMap[r.materia].acertos++;
+            });
+
+            const rankingOrdenado = Object.entries(rankMap)
+                .map(([materia, stats]) => ({
+                    materia,
+                    precisao: Math.round((stats.acertos / stats.total) * 100)
+                }))
+                .sort((a, b) => b.precisao - a.precisao)
+                .slice(0, 5);
+
+            renderizarRankingDisciplinas(rankingOrdenado);
+        }
+    } catch (err) { console.error("Erro ao atualizar widgets:", err); }
+}
+
+function renderizarRankingDisciplinas(ranking) {
+    const container = document.getElementById('ranking-disciplinas-lista');
+    if (!container) return;
+    if (ranking.length === 0) {
+        container.innerHTML = '<p style="font-size:12px; color:var(--text-muted)">Sem dados suficientes.</p>';
+        return;
+    }
+    container.innerHTML = ranking.map(item => `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px;">
+            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">${item.materia}</span>
+            <div style="display: flex; align-items: center; gap: 8px; flex: 1; justify-content: flex-end;">
+                <div style="width: 60px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                    <div style="width: ${item.precisao}%; height: 100%; background: var(--accent-color);"></div>
+                </div>
+                <span style="font-weight: bold; min-width: 35px; text-align: right;">${item.precisao}%</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+/* --- 6. TIMER --- */
 
 let timerInterval = null;
 let secondsElapsed = 0;
@@ -261,136 +401,12 @@ function updateTimerDisplay() {
     clock.innerText = `${format(hrs)}:${format(mins)}:${format(secs)}`;
 }
 
-/* --- 6. ATUALIZAÇÃO DE DASHBOARD E WIDGETS --- */
+/* --- 7. INICIALIZAÇÃO (EVENT LISTENERS) --- */
 
-async function atualizarWidgetsProgresso() {
-    if (!currentSession) return;
-
-    const hoje = new Date().toISOString().split('T')[0];
-    
-    try {
-        // 1. Buscar Acertos de Hoje
-        const { data: resolucoesHoje, error: errHoje } = await supabaseClient
-            .from('resolucoes')
-            .select('acertou')
-            .eq('user_id', currentSession.user.id)
-            .eq('data', hoje);
-
-        if (!errHoje && resolucoesHoje) {
-            const totalAcertos = resolucoesHoje.filter(r => r.acertou).length;
-            const elementAcertos = document.getElementById('widget-acertos-hoje');
-            if (elementAcertos) elementAcertos.innerText = totalAcertos;
-        }
-
-        // 2. Buscar Ranking de Disciplinas (Top 5)
-        const { data: todasResolucoes, error: errRank } = await supabaseClient
-            .from('resolucoes')
-            .select('materia, acertou')
-            .eq('user_id', currentSession.user.id);
-
-        if (!errRank && todasResolucoes) {
-            const rankMap = {};
-            todasResolucoes.forEach(r => {
-                if (!rankMap[r.materia]) rankMap[r.materia] = { total: 0, acertos: 0 };
-                rankMap[r.materia].total++;
-                if (r.acertou) rankMap[r.materia].acertos++;
-            });
-
-            const rankingOrdenado = Object.entries(rankMap)
-                .map(([materia, stats]) => ({
-                    materia,
-                    precisao: Math.round((stats.acertos / stats.total) * 100)
-                }))
-                .sort((a, b) => b.precisao - a.precisao)
-                .slice(0, 5);
-
-            renderizarRankingDisciplinas(rankingOrdenado);
-        }
-    } catch (err) {
-        console.error("Erro ao atualizar widgets:", err);
-    }
-}
-
-function renderizarRankingDisciplinas(ranking) {
-    const container = document.getElementById('ranking-disciplinas-lista');
-    if (!container) return;
-
-    if (ranking.length === 0) {
-        container.innerHTML = '<p style="font-size:12px; color:var(--text-muted)">Sem dados suficientes.</p>';
-        return;
-    }
-
-    container.innerHTML = ranking.map(item => `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px;">
-            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">
-                ${item.materia}
-            </span>
-            <div style="display: flex; align-items: center; gap: 8px; flex: 1; justify-content: flex-end;">
-                <div style="width: 60px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
-                    <div style="width: ${item.precisao}%; height: 100%; background: var(--accent-color);"></div>
-                </div>
-                <span style="font-weight: bold; min-width: 35px; text-align: right;">${item.precisao}%</span>
-            </div>
-        </div>
-    `).join('');
-}
-
-// Chamar ao carregar a página e após cada resposta
 document.addEventListener('DOMContentLoaded', () => {
-    // Timeout pequeno para garantir que a sessão foi carregada pelo auth.js
+    // 1. Carregar filtros de matérias imediatamente
+    carregarMateriasDisponiveis();
+    
+    // 2. Aguardar autenticação para widgets
     setTimeout(atualizarWidgetsProgresso, 1500);
 });
-
-/* --- NOVA FUNÇÃO: GERAR SIMULADO GERAL (CICLO) --- */
-async function gerarSimuladoGeral() {
-    const estilo = document.getElementById('set-estilo').value;
-    updateSyncUI('syncing');
-
-    try {
-        // Busca todas as questões do banco
-        const { data, error } = await supabaseClient.from('questoes').select('*');
-
-        if (error || !data?.length) {
-            alert("Erro ao buscar questões ou banco vazio.");
-            updateSyncUI('offline');
-            return;
-        }
-
-        // Agrupar questões por matéria
-        const agrupadoPorMateria = data.reduce((acc, q) => {
-            const mat = q.materia || "Sem Matéria";
-            if (!acc[mat]) acc[mat] = [];
-            acc[mat].push(q);
-            return acc;
-        }, {});
-
-        let listaFinal = [];
-
-        // Para cada matéria, embaralha e pega 5
-        for (const materia in agrupadoPorMateria) {
-            const sorteadas = agrupadoPorMateria[materia]
-                .sort(() => Math.random() - 0.5)
-                .slice(0, 5);
-            listaFinal = listaFinal.concat(sorteadas);
-        }
-
-        // Embaralha a lista final para não virem blocos seguidos de matérias
-        questoesAtuais = listaFinal.sort(() => Math.random() - 0.5);
-
-        // Resetar Placar
-        acertosSimulado = 0;
-        errosSimulado = 0;
-        document.getElementById('score-acertos').innerText = "0";
-        document.getElementById('score-erros').innerText = "0";
-        document.getElementById('score-total-q').innerText = questoesAtuais.length;
-
-        renderizarSimulado(estilo);
-        toggleConfig();
-        updateSyncUI('synced');
-        alert(`Simulado gerado com ${questoesAtuais.length} questões de ${Object.keys(agrupadoPorMateria).length} matérias.`);
-
-    } catch (err) {
-        console.error(err);
-        updateSyncUI('offline');
-    }
-}
