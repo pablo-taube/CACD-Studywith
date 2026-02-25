@@ -878,3 +878,26 @@ body {
         margin: 15px 0;
     }
 }
+
+/* Estilização padronizada para Selects de Filtro */
+select.search-bar {
+    appearance: none; /* Remove a seta padrão feia do navegador */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748B' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    cursor: pointer;
+    color: var(--text-main);
+    font-weight: 500;
+}
+
+select.search-bar option {
+    background: var(--sidebar-bg);
+    color: var(--text-main);
+}
+
+/* Ajuste de foco para ambos */
+#select-materia:focus, #set-assunto:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(105, 152, 171, 0.2);
+    outline: none;
+}

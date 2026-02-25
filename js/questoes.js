@@ -10,44 +10,47 @@ function toggleConfig() {
 
 async function carregarMateriasDisponiveis() {
     const selectMateria = document.getElementById('select-materia');
-    const datalistAssunto = document.getElementById('assuntos-sugeridos');
-    if (!selectMateria) return;
+    const selectAssunto = document.getElementById('set-assunto'); // Agora é um select
+    if (!selectMateria || !selectAssunto) return;
 
     try {
-        // Agora consultamos a VIEW, que é leve e rápida
-        const { data, error } = await supabaseClient
+        // 1. CARREGAMENTO DE MATÉRIAS (Mantido)
+        const { data: dataMaterias, error: errorMat } = await supabaseClient
             .from('lista_filtros')
             .select('*');
 
-        if (error) throw error;
-        if (!data) return;
+        if (!errorMat && dataMaterias) {
+            const materiasUnicas = [...new Set(dataMaterias.map(item => item.materia?.trim()))]
+                .filter(Boolean).sort();
 
-        // Extrair Matérias Únicas da View
-        const materiasUnicas = [...new Set(data.map(item => item.materia?.trim()))]
-            .filter(Boolean)
-            .sort();
+            selectMateria.innerHTML = '<option value="">-- Todas as Matérias --</option>';
+            materiasUnicas.forEach(materia => {
+                const option = document.createElement('option');
+                option.value = materia;
+                option.textContent = materia;
+                selectMateria.appendChild(option);
+            });
+        }
 
-        selectMateria.innerHTML = '<option value="">-- Todas as Matérias --</option>';
-        materiasUnicas.forEach(materia => {
-            const option = document.createElement('option');
-            option.value = materia;
-            option.textContent = materia;
-            selectMateria.appendChild(option);
-        });
+        // 2. CARREGAMENTO DE ASSUNTOS (Formatado como o Select de Matérias)
+        const { data: dataAssuntos, error: errorAss } = await supabaseClient
+            .from('lista_assuntos')
+            .select('assunto');
 
-        // Extrair Assuntos Únicos da View
-        if (datalistAssunto) {
-            const assuntosUnicos = [...new Set(data.map(item => item.assunto?.trim()))]
-                .filter(Boolean)
-                .sort();
+        if (!errorAss && dataAssuntos) {
+            // Limpamos e adicionamos a opção padrão
+            selectAssunto.innerHTML = '<option value="">-- Todos os Assuntos --</option>';
             
-            datalistAssunto.innerHTML = assuntosUnicos
-                .map(a => `<option value="${a}">`)
-                .join('');
+            dataAssuntos.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.assunto;
+                option.textContent = item.assunto;
+                selectAssunto.appendChild(option);
+            });
         }
 
     } catch (err) { 
-        console.error("Erro ao carregar filtros via View:", err); 
+        console.error("Erro ao sincronizar filtros:", err); 
     }
 }
 
