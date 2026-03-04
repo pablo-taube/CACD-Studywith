@@ -175,6 +175,7 @@ function renderizarSimulado(estilo) {
                 <button onclick="abrirEditorQuestao(${qObj.id})" class="btn-mini-reset" style="padding:5px 8px;">✏️</button>
             </div>
             <div class="enunciado" id="enunciado-${qObj.id}">${qObj.enunciado}</div>
+            <div class="fonte">${qObj.fonte || ''}</div>
             <div class="options-grid">${renderOptions(estilo, gabaritoFinal)}</div>
         `;
         container.appendChild(wrapper);
