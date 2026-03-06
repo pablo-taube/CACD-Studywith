@@ -11,3 +11,23 @@ let errosSimulado = 0;
 let questoesAtuais = [];
 let idQuestaoSendoEditada = null;
 let dadosResolucoes = []; // Para o Dashboard e Ranking
+
+/* --- MONITOR DE ARMAZENAMENTO --- */
+async function atualizarStatusArmazenamento() {
+    try {
+        const { data, error } = await supabaseClient.rpc('get_db_size_total');
+        
+        const storageEl = document.getElementById('db-storage-val');
+        if (storageEl && !error) {
+            storageEl.innerText = data;
+        }
+    } catch (err) {
+        console.error("Erro ao ler armazenamento:", err);
+    }
+}
+
+// Adicione a chamada dentro do seu listener de inicialização existente
+document.addEventListener('DOMContentLoaded', () => {
+    // ... suas outras chamadas (carregarMaterias, etc)
+    atualizarStatusArmazenamento();
+});

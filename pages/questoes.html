@@ -2,20 +2,20 @@
 <html lang="pt-br">
   <head>
     <meta charset="UTF-8" />
-    <title>Diplomatique | Questões</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Diplomatique | Questões</title>
+    <link rel="icon" type="image/x-icon" href="../assets/embassy.png" />
     <link
       href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@400;600&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../style/style.css" />
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="icon" type="image/x-icon" href="../assets/embassy.png" />
   </head>
   <body>
     <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
       <span id="hamburger-icon">☰</span>
     </button>
+
     <div class="sidebar-overlay" onclick="toggleMobileMenu()"></div>
 
     <div id="auth-modal" class="auth-overlay">
@@ -32,7 +32,6 @@
         >
           Sincronize seu progresso no Supabase.
         </p>
-
         <input
           type="email"
           id="auth-email"
@@ -47,7 +46,6 @@
           class="opt-btn"
           style="width: 100%; margin-bottom: 20px; padding: 12px"
         />
-
         <button
           onclick="handleAuth()"
           class="btn-primary"
@@ -76,6 +74,116 @@
       </div>
     </div>
 
+    <div id="modal-editor" class="auth-overlay" style="z-index: 9999">
+      <div
+        class="auth-card"
+        style="max-width: 600px; text-align: left; width: 90%"
+      >
+        <h2 style="margin-bottom: 15px; font-size: 1.2rem">
+          ✏️ Editar Questão
+        </h2>
+        <label style="font-size: 11px; color: var(--text-muted)"
+          >ENUNCIADO (HTML)</label
+        >
+        <textarea
+          id="edit-enunciado"
+          style="height: 120px; width: 100%"
+        ></textarea>
+        <label
+          style="
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 10px;
+            display: block;
+          "
+          >COMENTÁRIO</label
+        >
+        <textarea
+          id="edit-comentario"
+          style="height: 80px; width: 100%"
+        ></textarea>
+        <div
+          style="
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+          "
+        >
+          <div>
+            <label style="font-size: 11px; color: var(--text-muted)"
+              >MATÉRIA</label
+            >
+            <input
+              type="text"
+              id="edit-materia"
+              class="opt-btn"
+              style="width: 100%"
+            />
+          </div>
+          <div>
+            <label style="font-size: 11px; color: var(--text-muted)"
+              >ASSUNTO</label
+            >
+            <input
+              type="text"
+              id="edit-assunto"
+              class="opt-btn"
+              style="width: 100%"
+            />
+          </div>
+        </div>
+        <div
+          style="
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+          "
+        >
+          <div>
+            <label style="font-size: 11px; color: var(--text-muted)"
+              >FONTE</label
+            >
+            <input
+              type="text"
+              id="edit-fonte"
+              class="opt-btn"
+              style="width: 100%"
+            />
+          </div>
+          <div>
+            <label style="font-size: 11px; color: var(--text-muted)"
+              >GABARITO</label
+            >
+            <input
+              type="text"
+              id="edit-gabarito"
+              class="opt-btn"
+              style="width: 100%"
+            />
+          </div>
+        </div>
+        <input type="hidden" id="edit-id" />
+        <div style="display: flex; gap: 10px; margin-top: 25px">
+          <button
+            onclick="salvarEdicaoCompleta()"
+            class="btn-primary"
+            style="flex: 1"
+          >
+            Salvar no Banco
+          </button>
+          <button
+            onclick="fecharEditor()"
+            class="btn-mini-reset"
+            style="background: rgba(0, 0, 0, 0.05); color: var(--text-main)"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+
     <aside class="sidebar" id="sidebar">
       <div class="logo">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -83,7 +191,6 @@
         </svg>
         Diplomatique
       </div>
-
       <div class="menu-group">
         <div class="menu-label">Menu</div>
         <a href="../index.html" class="menu-item">📊 Dashboard</a>
@@ -91,7 +198,6 @@
         <a href="flashcards.html" class="menu-item">🧠 Flashcards</a>
         <a href="questoes.html" class="menu-item active">📝 Questões</a>
       </div>
-
       <div class="menu-group" style="margin-top: auto">
         <div class="menu-label">General</div>
         <div
@@ -101,11 +207,9 @@
           🚪 Sair da Conta
         </div>
       </div>
-
       <div id="sync-indicator" class="sync-status offline">
         <span id="sync-icon">☁️</span> <span id="sync-text">Offline</span>
       </div>
-
       <button class="theme-switch" onclick="toggleTheme()" id="theme-toggle">
         <span id="theme-text">Modo Escuro</span>
         <div class="theme-icon" id="theme-icon">🌙</div>
@@ -115,7 +219,6 @@
     <main class="main-content">
       <header class="topbar"></header>
       <h1 style="margin-bottom: 20px">Simulado Inteligente</h1>
-
       <div class="questoes-header-grid">
         <div class="config-panel collapsed" id="config-panel">
           <h2
@@ -150,7 +253,6 @@
                 class="opt-btn"
               />
             </div>
-
             <div
               style="
                 display: grid;
@@ -171,10 +273,9 @@
                   list="assuntos-sugeridos"
                   style="width: 100%"
                 />
-                <datalist id="assuntos-sugeridos"> </datalist>
+                <datalist id="assuntos-sugeridos"></datalist>
               </div>
             </div>
-
             <button
               onclick="processQuestions()"
               class="btn-primary"
@@ -182,7 +283,6 @@
             >
               Gerar Simulado Filtrado
             </button>
-
             <button
               onclick="gerarSimuladoGeral()"
               class="btn-primary"
@@ -197,7 +297,6 @@
             </button>
           </div>
         </div>
-
         <div id="simulado-score-box" class="card-score-compact">
           <div class="score-data" style="width: 100%">
             <div class="score-main-val">
@@ -226,8 +325,40 @@
           </div>
         </div>
       </div>
-
       <div id="questions-render" class="questoes-lista-total"></div>
+
+      <footer
+        style="
+          margin-top: auto;
+          padding: 20px 0;
+          border-top: 1px solid rgba(0, 0, 0, 0.05);
+        "
+      >
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-muted);
+            font-size: 11px;
+          "
+        >
+          <div
+            style="
+              width: 8px;
+              height: 8px;
+              background: #50fa7b;
+              border-radius: 50%;
+              box-shadow: 0 0 8px rgba(80, 250, 123, 0.5);
+            "
+          ></div>
+          <span>Servidor Ativo</span>
+          <span style="margin-left: auto"
+            >Uso do Banco:
+            <strong id="db-storage-val">Carregando...</strong></span
+          >
+        </div>
+      </footer>
     </main>
 
     <div class="timer-widget">
@@ -241,125 +372,8 @@
       </div>
     </div>
 
-    <div id="modal-editor" class="auth-overlay" style="z-index: 9999">
-      <div
-        class="auth-card"
-        style="max-width: 600px; text-align: left; width: 90%"
-      >
-        <h2 style="margin-bottom: 15px; font-size: 1.2rem">
-          ✏️ Editar Questão
-        </h2>
-
-        <label style="font-size: 11px; color: var(--text-muted)"
-          >ENUNCIADO (HTML)</label
-        >
-        <textarea
-          id="edit-enunciado"
-          style="height: 120px; width: 100%"
-        ></textarea>
-
-        <label
-          style="
-            font-size: 11px;
-            color: var(--text-muted);
-            margin-top: 10px;
-            display: block;
-          "
-          >COMENTÁRIO</label
-        >
-        <textarea
-          id="edit-comentario"
-          style="height: 80px; width: 100%"
-        ></textarea>
-
-        <div
-          style="
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 10px;
-          "
-        >
-          <div>
-            <label style="font-size: 11px; color: var(--text-muted)"
-              >MATÉRIA</label
-            >
-            <input
-              type="text"
-              id="edit-materia"
-              class="opt-btn"
-              style="width: 100%"
-            />
-          </div>
-          <div>
-            <label style="font-size: 11px; color: var(--text-muted)"
-              >ASSUNTO</label
-            >
-            <input
-              type="text"
-              id="edit-assunto"
-              class="opt-btn"
-              style="width: 100%"
-            />
-          </div>
-        </div>
-
-        <div
-          style="
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 10px;
-          "
-        >
-          <div>
-            <label style="font-size: 11px; color: var(--text-muted)"
-              >FONTE</label
-            >
-            <input
-              type="text"
-              id="edit-fonte"
-              class="opt-btn"
-              style="width: 100%"
-            />
-          </div>
-          <div>
-            <label style="font-size: 11px; color: var(--text-muted)"
-              >GABARITO</label
-            >
-            <input
-              type="text"
-              id="edit-gabarito"
-              class="opt-btn"
-              style="width: 100%"
-            />
-          </div>
-        </div>
-
-        <input type="hidden" id="edit-id" />
-
-        <div style="display: flex; gap: 10px; margin-top: 25px">
-          <button
-            onclick="salvarEdicaoCompleta()"
-            class="btn-primary"
-            style="flex: 1"
-          >
-            Salvar no Banco
-          </button>
-          <button
-            onclick="fecharEditor()"
-            class="btn-mini-reset"
-            style="background: rgba(0, 0, 0, 0.05); color: var(--text-main)"
-          >
-            Cancelar
-          </button>
-        </div>
-      </div>
-    </div>
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <script src="../js/supabase-config.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/charts.js"></script>
