@@ -1,97 +1,176 @@
-async function initializeApp() {
-    const savedTheme = localStorage.getItem('donezo_theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    updateThemeUI(savedTheme);
+// ─── Constantes ───────────────────────────────────────────────────────────────
 
-    const localData = localStorage.getItem('donezo_db');
-    if (localData) db = JSON.parse(localData);
+const STORAGE_KEYS = {
+  THEME: 'donezo_theme',
+  DB: 'donezo_db',
+};
 
-    const { data } = await supabaseClient.auth.getSession();
-    currentSession = data.session;
+const SYNC_STATES = {
+  SYNCING: 'syncing',
+  SYNCED: 'synced',
+  OFFLINE: 'offline',
+};
 
-    if (currentSession) {
-        await fetchRemoteDB();
-        if (typeof carregarMateriasDisponiveis === 'function') await carregarMateriasDisponiveis();
-    } else {
-        updateSyncUI('offline');
-        openAuthModal();
-    }
+const SYNC_UI_CONFIG = {
+  [SYNC_STATES.SYNCING]: { icon: '🔄', text: 'Sincronizando...' },
+  [SYNC_STATES.SYNCED]:  { icon: '☁️', text: 'Nuvem Atualizada' },
+  [SYNC_STATES.OFFLINE]: { icon: '☁️', text: 'Offline' },
+};
 
-    if (typeof updateDashboard === 'function') updateDashboard();
-    highlightActiveMenu();
+const SYNC_DELAY_MS = 600;
+
+// ─── Utilitários ──────────────────────────────────────────────────────────────
+
+function getElement(id) {
+  return document.getElementById(id);
 }
 
-window.addEventListener('load', initializeApp);
-
-async function handleAuth() {
-    const email = document.getElementById('auth-email').value;
-    const password = document.getElementById('auth-password').value;
-    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) return alert(error.message);
-    location.reload();
+function safeCall(fn, ...args) {
+  if (typeof fn === 'function') fn(...args);
 }
 
-async function fetchRemoteDB() {
-    updateSyncUI('syncing');
-    try {
-        const { data } = await supabaseClient.from('user_progress').select('data_json').single();
-        if (data?.data_json) {
-            db = data.data_json;
-            localStorage.setItem('donezo_db', JSON.stringify(db));
-        }
-        updateSyncUI('synced');
-    } catch { updateSyncUI('offline'); }
+// ─── Tema ─────────────────────────────────────────────────────────────────────
+
+function loadTheme() {
+  const theme = localStorage.getItem(STORAGE_KEYS.THEME) || 'light';
+  applyTheme(theme);
 }
 
-async function saveDB() {
-    localStorage.setItem('donezo_db', JSON.stringify(db));
-    if (typeof updateDashboard === 'function') updateDashboard();
-
-    if (!currentSession) return;
-    updateSyncUI('syncing');
-    const { error } = await supabaseClient.from('user_progress').upsert({
-        id: currentSession.user.id,
-        data_json: db,
-        updated_at: new Date()
-    });
-    if (!error) setTimeout(() => updateSyncUI('synced'), 600);
-    else updateSyncUI('offline');
-}
-
-function updateSyncUI(status) {
-    const indicator = document.getElementById('sync-indicator');
-    if (!indicator) return;
-    const icon = document.getElementById('sync-icon');
-    const text = document.getElementById('sync-text');
-    const states = {
-        syncing: { icon: '🔄', text: 'Sincronizando...' },
-        synced: { icon: '☁️', text: 'Nuvem Atualizada' },
-        offline: { icon: '☁️', text: 'Offline' }
-    };
-    const state = states[status] || states.offline;
-    indicator.className = `sync-status ${status}`;
-    icon.innerText = state.icon;
-    text.innerText = state.text;
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem(STORAGE_KEYS.THEME, theme);
+  updateThemeUI(theme);
 }
 
 function toggleTheme() {
-    const html = document.documentElement;
-    const theme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    html.setAttribute('data-theme', theme);
-    localStorage.setItem('donezo_theme', theme);
-    updateThemeUI(theme);
+  const current = document.documentElement.getAttribute('data-theme');
+  applyTheme(current === 'dark' ? 'light' : 'dark');
 }
 
 function updateThemeUI(theme) {
-    const icon = document.getElementById('theme-icon');
-    if (icon) icon.innerText = theme === 'dark' ? '☀️' : '🌙';
+  const icon = getElement('theme-icon');
+  if (icon) icon.innerText = theme === 'dark' ? '☀️' : '🌙';
 }
 
-function toggleAuthModal() { document.getElementById('auth-modal').classList.toggle('active'); }
-function openAuthModal() { document.getElementById("auth-modal").classList.remove("hidden"); }
-function highlightActiveMenu() {
-    const page = window.location.pathname.split("/").pop() || "index.html";
-    document.querySelectorAll('.menu-item').forEach(item => {
-        if (item.getAttribute('href')?.includes(page)) item.classList.add('active');
-    });
+// ─── Banco de Dados Local ──────────────────────────────────────────────────────
+
+function loadLocalDB() {
+  const raw = localStorage.getItem(STORAGE_KEYS.DB);
+  if (raw) {
+    try {
+      db = JSON.parse(raw);
+    } catch {
+      console.warn('Falha ao parsear donezo_db do localStorage.');
+    }
+  }
 }
+
+function persistLocalDB() {
+  localStorage.setItem(STORAGE_KEYS.DB, JSON.stringify(db));
+}
+
+// ─── Sincronização ────────────────────────────────────────────────────────────
+
+function updateSyncUI(status) {
+  const indicator = getElement('sync-indicator');
+  if (!indicator) return;
+
+  const config = SYNC_UI_CONFIG[status] ?? SYNC_UI_CONFIG[SYNC_STATES.OFFLINE];
+  indicator.className = `sync-status ${status}`;
+  getElement('sync-icon').innerText = config.icon;
+  getElement('sync-text').innerText = config.text;
+}
+
+async function fetchRemoteDB() {
+  updateSyncUI(SYNC_STATES.SYNCING);
+  try {
+    const { data } = await supabaseClient
+      .from('user_progress')
+      .select('data_json')
+      .single();
+
+    if (data?.data_json) {
+      db = data.data_json;
+      persistLocalDB();
+    }
+    updateSyncUI(SYNC_STATES.SYNCED);
+  } catch {
+    updateSyncUI(SYNC_STATES.OFFLINE);
+  }
+}
+
+async function saveDB() {
+  persistLocalDB();
+  safeCall(updateDashboard);
+
+  if (!currentSession) return;
+
+  updateSyncUI(SYNC_STATES.SYNCING);
+  const { error } = await supabaseClient.from('user_progress').upsert({
+    id: currentSession.user.id,
+    data_json: db,
+    updated_at: new Date(),
+  });
+
+  if (error) {
+    updateSyncUI(SYNC_STATES.OFFLINE);
+  } else {
+    setTimeout(() => updateSyncUI(SYNC_STATES.SYNCED), SYNC_DELAY_MS);
+  }
+}
+
+// ─── Autenticação ─────────────────────────────────────────────────────────────
+
+async function handleAuth() {
+  const email    = getElement('auth-email').value;
+  const password = getElement('auth-password').value;
+
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+  if (error) {
+    alert(error.message);
+    return;
+  }
+  location.reload();
+}
+
+function toggleAuthModal() {
+  getElement('auth-modal').classList.toggle('active');
+}
+
+function openAuthModal() {
+  getElement('auth-modal').classList.remove('hidden');
+}
+
+// ─── Navegação ────────────────────────────────────────────────────────────────
+
+function highlightActiveMenu() {
+  const page = window.location.pathname.split('/').pop() || 'index.html';
+  document.querySelectorAll('.menu-item').forEach(item => {
+    if (item.getAttribute('href')?.includes(page)) {
+      item.classList.add('active');
+    }
+  });
+}
+
+// ─── Inicialização ────────────────────────────────────────────────────────────
+
+async function initializeApp() {
+  loadTheme();
+  loadLocalDB();
+
+  const { data } = await supabaseClient.auth.getSession();
+  currentSession = data.session;
+
+  if (currentSession) {
+    await fetchRemoteDB();
+    safeCall(carregarMateriasDisponiveis);
+  } else {
+    updateSyncUI(SYNC_STATES.OFFLINE);
+    openAuthModal();
+  }
+
+  safeCall(updateDashboard);
+  highlightActiveMenu();
+}
+
+window.addEventListener('load', initializeApp);
