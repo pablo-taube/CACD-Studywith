@@ -538,3 +538,39 @@ function highlightActiveMenu() {
         if (item.getAttribute('href')?.includes(page)) item.classList.add('active');
     });
 }
+
+// === MENU HAMBÚRGUER MOBILE ===
+document.addEventListener('DOMContentLoaded', function () {
+    const menuToggle = document.querySelector('.mobile-menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+
+    function abrirMenu() {
+        sidebar.classList.add('active');
+        overlay.classList.add('active');
+        overlay.style.display = 'block';
+    }
+
+    function fecharMenu() {
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+        overlay.style.display = 'none';
+    }
+
+    if (menuToggle) {
+        menuToggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            sidebar.classList.contains('active') ? fecharMenu() : abrirMenu();
+        });
+    }
+
+    if (overlay) {
+        overlay.addEventListener('click', fecharMenu);
+    }
+
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', function () {
+            if (window.innerWidth <= 768) fecharMenu();
+        });
+    });
+});
