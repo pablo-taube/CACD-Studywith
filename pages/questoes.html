@@ -237,22 +237,39 @@
             <div
               style="
                 display: grid;
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: 1fr 1fr 110px;
                 gap: 10px;
                 margin-top: 15px;
               "
             >
-              <select id="set-estilo" class="opt-btn">
+              <select
+                id="set-estilo"
+                class="opt-btn"
+                style="padding: 12px 15px; font-size: 0.95rem"
+              >
                 <option value="cespe">CESPE (C/E)</option>
                 <option value="fgv">FGV (A-E)</option>
               </select>
+
+              <select
+                id="set-status"
+                class="opt-btn"
+                style="padding: 12px 15px; font-size: 0.95rem"
+              >
+                <option value="todas">Todas as Questões</option>
+                <option value="nunca">Inéditas (Nunca resolvidas)</option>
+                <option value="erradas">Revisão (Errei recentemente)</option>
+              </select>
+
               <input
                 type="number"
                 id="set-limite"
-                placeholder="Qtd. questões"
+                placeholder="Qtd."
                 class="opt-btn"
+                style="padding: 12px 15px; font-size: 0.95rem; min-width: 0"
               />
             </div>
+
             <div
               style="
                 display: grid;
@@ -261,21 +278,32 @@
                 margin-top: 10px;
               "
             >
-              <select id="select-materia" class="opt-btn">
+              <select
+                id="select-materia"
+                class="opt-btn"
+                style="padding: 12px 15px; font-size: 0.95rem"
+              >
                 <option value="">-- Carregando matérias... --</option>
               </select>
-              <div style="position: relative">
+
+              <div style="position: relative; min-width: 0">
                 <input
                   type="text"
                   id="set-assunto"
                   class="opt-btn"
                   list="assuntos-sugeridos"
                   placeholder="Digite ou selecione o assunto"
-                  style="width: 100%"
+                  style="
+                    width: 100%;
+                    padding: 12px 15px;
+                    font-size: 0.95rem;
+                    min-width: 0;
+                  "
                 />
                 <datalist id="assuntos-sugeridos"></datalist>
               </div>
             </div>
+
             <button
               onclick="processQuestions()"
               class="btn-primary"

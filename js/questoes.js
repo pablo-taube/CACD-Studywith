@@ -72,22 +72,21 @@ async function processQuestions() {
     const assunto = document.getElementById('set-assunto').value.trim() || null;
     const limite = parseInt(document.getElementById('set-limite').value) || 10;
     const estilo = document.getElementById('set-estilo').value;
+    const status = document.getElementById('set-status').value; // <- Capturando o novo filtro
 
     updateSyncUI('syncing');
 
     try {
-        // Se houver assunto digitado, a RPC tratará a busca. 
-        // Se você não estiver usando RPC para assuntos manuais, a query padrão seria:
-        // .ilike('assunto', `%${assunto}%`)
-        
+        // Passando o p_status para a RPC no servidor
         const { data, error } = await supabaseClient.rpc('get_random_questions', {
             p_materia: (materia === "") ? null : materia,
-            p_assunto: (assunto === "") ? null : assunto, // O RPC faz busca exata, se quiser parcial precisará ajustar o SQL
+            p_assunto: (assunto === "") ? null : assunto,
+            p_status: status, // <- Enviando o parâmetro
             p_limite: limite
         });
 
         if (error || !data?.length) {
-            alert("Nenhuma questão encontrada.");
+            alert("Nenhuma questão encontrada com esses filtros.");
             updateSyncUI('offline');
             return;
         }
