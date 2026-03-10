@@ -296,6 +296,7 @@ async function salvarEdicaoCompleta() {
         const el = document.getElementById(`enunciado-${id}`);
         if (el) el.innerHTML = dados.enunciado;
     }
+   
 
     updateSyncUI('synced');
     fecharEditor();
@@ -334,3 +335,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 1500);
 });
+
+/* ─── 8. FUNÇÕES AUSENTES ────────────────────────────────────────── */
+function fecharEditor() {
+    document.getElementById('modal-editor').classList.remove('active');
+    idQuestaoSendoEditada = null;
+}
+function resetarPlacarInterface(total) {
+    acertosSimulado = 0;
+    errosSimulado = 0;
+    atualizarPlacarUI();
+    if (UI.scoreTotal) UI.scoreTotal.innerText = total;
+}

@@ -1,46 +1,65 @@
-/* --- CONFIGURAÇÃO SUPABASE --- */
+/* ═══════════════════════════════════════════════════════════════════
+   DIPLOMATIQUE — supabase-config.js (Refatorado)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── 1. CONFIGURAÇÃO SUPABASE ───────────────────────────────────── */
 const SUPABASE_URL = 'https://ozhtjngfedtslwgeafyv.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_nP-XLqixj7YPWh1AoDFfAQ_JHQSlRF-';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-/* --- 1. ESTADO GLOBAL --- */
+/* ─── 2. ESTADO GLOBAL ───────────────────────────────────────────── */
 let db = { total_questoes: 0, acertos: 0, flashcards: 0, xp: 0, materias: {}, simuladoAtivo: null };
-let currentSession = null;
-let acertosSimulado = 0;
-let errosSimulado = 0;
-let questoesAtuais = [];
+let currentSession      = null;
+let acertosSimulado     = 0;
+let errosSimulado       = 0;
+let questoesAtuais      = [];
 let idQuestaoSendoEditada = null;
+let timerInterval  = null;
+let secondsElapsed = 0;
 
-/* --- 2. INICIALIZAÇÃO --- */
+function resetTimer() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    secondsElapsed = 0;
+    updateTimerDisplay();
+    if (UI.btnTimer) UI.btnTimer.innerText = 'Iniciar';
+}
+
+/* ─── 3. INICIALIZAÇÃO ───────────────────────────────────────────── */
+window.addEventListener('load', initializeApp);
+
 async function initializeApp() {
-    // 1. Recuperar tema
+    // Tema salvo
     const savedTheme = localStorage.getItem('donezo_theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
     updateThemeUI(savedTheme);
 
-    // 2. Recuperar dados locais
+    // Dados locais
     const localData = localStorage.getItem('donezo_db');
     if (localData) db = JSON.parse(localData);
 
-    // 3. Verificar sessão
+    // Sessão
     const { data } = await supabaseClient.auth.getSession();
     currentSession = data.session;
 
     if (currentSession) {
         await fetchRemoteDB();
-        await carregarMateriasDisponiveis();
+        // carregarMateriasDisponiveis vive em questoes.js (só existe nessa página)
+        if (typeof carregarMateriasDisponiveis === 'function') {
+            await carregarMateriasDisponiveis();
+        }
     } else {
         updateSyncUI('offline');
         openAuthModal();
     }
 
-    updateDashboard();
+    // updateDashboard vive em charts.js
+    if (typeof updateDashboard === 'function') updateDashboard();
+
     highlightActiveMenu();
 }
 
-window.addEventListener('load', initializeApp);
-
-/* --- 3. BANCO DE DADOS E SINCRONIZAÇÃO --- */
+/* ─── 4. SINCRONIZAÇÃO COM SUPABASE ──────────────────────────────── */
 function updateSyncUI(status) {
     const indicator = document.getElementById('sync-indicator');
     if (!indicator) return;
@@ -48,32 +67,28 @@ function updateSyncUI(status) {
     const icon = document.getElementById('sync-icon');
     const text = document.getElementById('sync-text');
 
-    indicator.className = `sync-status ${status}`;
     const states = {
         syncing: { icon: '🔄', text: 'Sincronizando...' },
-        synced: { icon: '☁️', text: 'Nuvem Atualizada' },
-        offline: { icon: '☁️', text: 'Offline' }
+        synced:  { icon: '☁️', text: 'Nuvem Atualizada' },
+        offline: { icon: '☁️', text: 'Offline' },
     };
-
     const state = states[status] || states.offline;
-    icon.innerText = state.icon;
-    text.innerText = state.text;
+
+    indicator.className = `sync-status ${status}`;
+    if (icon) icon.innerText = state.icon;
+    if (text) text.innerText = state.text;
 }
 
 async function saveDB() {
     localStorage.setItem('donezo_db', JSON.stringify(db));
-    updateDashboard();
 
+    if (typeof updateDashboard === 'function') updateDashboard();
     if (!currentSession) return;
-    updateSyncUI('syncing');
 
+    updateSyncUI('syncing');
     const { error } = await supabaseClient
         .from('user_progress')
-        .upsert({
-            id: currentSession.user.id,
-            data_json: db,
-            updated_at: new Date()
-        });
+        .upsert({ id: currentSession.user.id, data_json: db, updated_at: new Date() });
 
     if (!error) setTimeout(() => updateSyncUI('synced'), 600);
     else updateSyncUI('offline');
@@ -92,284 +107,42 @@ async function fetchRemoteDB() {
             localStorage.setItem('donezo_db', JSON.stringify(db));
         }
         updateSyncUI('synced');
-        updateDashboard();
+        if (typeof updateDashboard === 'function') updateDashboard();
     } catch {
         updateSyncUI('offline');
     }
 }
 
-/* --- 4. CONTROLE DE SIMULADO --- */
-async function carregarMateriasDisponiveis() {
-    const selectMateria = document.getElementById('select-materia');
-    const datalistAssunto = document.getElementById('assuntos-sugeridos');
-    if (!selectMateria) return;
+/* ─── 5. AUTENTICAÇÃO ────────────────────────────────────────────── */
+function openAuthModal()  { document.getElementById('auth-modal')?.classList.add('active'); }
+function closeAuthModal() { document.getElementById('auth-modal')?.classList.remove('active'); }
+function toggleAuthModal() { document.getElementById('auth-modal')?.classList.toggle('active'); }
 
-    try {
-        // Busca matérias e assuntos simultaneamente
-        const { data, error } = await supabaseClient.from('questoes').select('materia, assunto');
-        if (error) throw error;
-
-        // Processar Matérias
-        const materiasUnicas = [...new Set(data.map(item => item.materia))].filter(Boolean).sort();
-        selectMateria.innerHTML = '<option value="">-- Todas as Matérias --</option>';
-        materiasUnicas.forEach(materia => {
-            const option = document.createElement('option');
-            option.value = materia;
-            option.textContent = materia;
-            selectMateria.appendChild(option);
-        });
-
-        // Processar Assuntos (para o Datalist)
-        if (datalistAssunto) {
-            const assuntosUnicos = [...new Set(data.map(item => item.assunto))].filter(Boolean).sort();
-            datalistAssunto.innerHTML = '';
-            assuntosUnicos.forEach(assunto => {
-                const option = document.createElement('option');
-                option.value = assunto;
-                datalistAssunto.appendChild(option);
-            });
-        }
-    } catch (err) {
-        console.error("Erro ao carregar filtros:", err);
-    }
+let _authModeIsRegister = false;
+function toggleAuthMode() {
+    _authModeIsRegister = !_authModeIsRegister;
+    const title      = document.getElementById('auth-title');
+    const toggleText = document.getElementById('auth-toggle-text');
+    if (title)      title.innerText      = _authModeIsRegister ? 'Criar Conta' : 'Entrar na Nuvem';
+    if (toggleText) toggleText.innerText = _authModeIsRegister ? 'Já tem conta? Entrar' : 'Não tem conta? Cadastre-se';
 }
-
-async function processQuestions() {
-    const materia = document.getElementById('select-materia').value;
-    const assunto = document.getElementById('set-assunto').value.trim();
-    const estilo = document.getElementById('set-estilo').value;
-    const limite = parseInt(document.getElementById('set-limite').value) || 10;
-
-    if (!materia && !assunto) return alert("Selecione ao menos uma matéria ou assunto!");
-
-    updateSyncUI('syncing');
-    try {
-        let query = supabaseClient.from('questoes').select('*');
-        if (materia) query = query.eq('materia', materia);
-        if (assunto) query = query.ilike('assunto', `%${assunto}%`);
-
-        const { data, error } = await query;
-        if (error) throw error;
-        if (!data?.length) {
-            updateSyncUI('offline');
-            return alert("Nenhuma questão encontrada.");
-        }
-
-        questoesAtuais = data.sort(() => Math.random() - 0.5).slice(0, limite);
-        acertosSimulado = 0;
-        errosSimulado = 0;
-
-        renderizarSimulado(estilo);
-        updateSyncUI('synced');
-        toggleConfig();
-    } catch (err) {
-        console.error(err);
-        updateSyncUI('offline');
-    }
-}
-
-function renderizarSimulado(estilo) {
-    const container = document.getElementById('questions-render');
-    if (!container) return;
-    container.innerHTML = "";
-
-    questoesAtuais.forEach((qObj, index) => {
-        const wrapper = document.createElement('div');
-        wrapper.className = "q-container";
-        wrapper.dataset.questaoId = qObj.id; 
-
-        // Lógica de Extração Híbrida (Coluna do Banco OU HTML legado)
-        let gabaritoFinal = qObj.gabarito ? qObj.gabarito.toLowerCase().trim() : "";
-        
-        // Se a coluna do banco estiver vazia, tenta extrair do HTML
-        if (!gabaritoFinal || gabaritoFinal === "") {
-            const temp = document.createElement('div');
-            temp.innerHTML = qObj.enunciado + (qObj.comentario || "");
-            const gabEl = temp.querySelector('.gabarito');
-            if (gabEl) {
-                const text = gabEl.innerText.toLowerCase();
-                if (text.includes('certo') || text === 'c') gabaritoFinal = 'c';
-                else if (text.includes('errado') || text === 'e') gabaritoFinal = 'e';
-                else gabaritoFinal = text.match(/[a-e]/) ? text.match(/[a-e]/)[0] : "a";
-            }
-        }
-
-        wrapper.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <p style="color:var(--accent-color); font-weight:700; font-size:0.8rem; margin:0;">
-                    QUESTÃO ${index + 1} | ${qObj.banca || 'Geral'}
-                </p>
-                <button onclick="abrirEditorQuestao(${qObj.id})" title="Editar"
-                        style="background: #f0f4f8; border: 1px solid #d1d9e0; border-radius: 8px; padding: 5px 8px; cursor: pointer; font-size: 1.1rem;">
-                    ✏️
-                </button>
-            </div>
-            <div class="enunciado" id="enunciado-${qObj.id}">${qObj.enunciado}</div>
-            <div class="fonte" style="margin-top: 10px; font-size: 0.8rem; opacity: 0.7;">${qObj.fonte || ""}</div>
-            <div class="options-grid">
-                ${renderOptions(estilo, gabaritoFinal)}
-            </div>
-        `;
-        container.appendChild(wrapper);
-    });
-}
-
-function renderOptions(estilo, gabarito) {
-    if (estilo === 'cespe') {
-        return `
-            <button class="opt-btn" onclick="check(this,'c','${gabarito}','cespe')">Certo</button>
-            <button class="opt-btn" onclick="check(this,'e','${gabarito}','cespe')">Errado</button>`;
-    }
-    return ['A','B','C','D','E']
-        .map(opt => `<button class="opt-btn" onclick="check(this,'${opt.toLowerCase()}','${gabarito}','fgv')">${opt}</button>`)
-        .join('');
-}
-
-async function check(btn, choice, correct, estilo) {
-    const container = btn.closest('.q-container');
-    const optionsGrid = btn.parentElement;
-    const questaoId = container.dataset.questaoId; // Recupera o ID do atributo data
-
-    if (optionsGrid.classList.contains('answered')) return;
-    optionsGrid.classList.add('answered');
-
-    // --- FUNÇÃO DE NORMALIZAÇÃO ---
-    const normalizar = (valor) => {
-        if (!valor) return "";
-        let v = String(valor).trim().toLowerCase();
-        if (v === 'certo') return 'c';
-        if (v === 'errado') return 'e';
-        return v.charAt(0); 
-    };
-
-    const escolhaUsuario = normalizar(choice);
-    const gabaritoOficial = normalizar(correct);
-    const acertou = escolhaUsuario === gabaritoOficial;
-
-    // Localizar dados da questão para XP e Matéria
-    const qData = questoesAtuais.find(q => q.id == questaoId);
-    const xp_ganho = acertou ? 10 : (estilo === 'cespe' ? -5 : 0);
-
-    // Feedback Visual
-    if (acertou) {
-        btn.classList.add('correct');
-        acertosSimulado++;
-        db.acertos++;
-        db.xp += 10;
-    } else {
-        btn.classList.add('wrong');
-        errosSimulado++;
-        if (estilo === 'cespe') db.xp -= 5;
-    }
-
-    // SALVAR LOG NO BANCO (Atividade Diária)
-    if (currentSession && qData) {
-        await supabaseClient.from('resolucoes').insert({
-            user_id: currentSession.user.id,
-            materia: qData.materia || "Geral",
-            acertou: acertou,
-            xp_ganho: xp_ganho,
-            data: new Date().toISOString().split('T')[0]
-        });
-    }
-
-    // Exibição do comentário (se houver)
-    if (qData?.comentario) {
-        const commentDiv = document.createElement('div');
-        commentDiv.className = "comentario show-comment";
-        commentDiv.innerHTML = qData.comentario;
-        container.appendChild(commentDiv);
-    }
-
-    // Atualização do Placar Local
-    const elAcertos = document.getElementById('score-acertos');
-    const elErros = document.getElementById('score-erros');
-    if (elAcertos) elAcertos.innerText = acertosSimulado;
-    if (elErros) elErros.innerText = errosSimulado;
-
-    saveDB();
-    if (questaoId) await updateQuestaoStats(questaoId, acertou);
-}
-
-async function updateQuestaoStats(id, acertou) {
-    if (!currentSession) return;
-    const { data } = await supabaseClient.from('questoes').select('historico_respostas').eq('id', id).single();
-    let historico = data?.historico_respostas || [];
-    historico.unshift(acertou);
-    if (historico.length > 3) historico.pop();
-
-    await supabaseClient.from('questoes').update({
-        ultima_vez_respondida: new Date(),
-        historico_respostas: historico
-    }).eq('id', id);
-}
-
-/* --- 5. EDITOR DE QUESTÕES --- */
-function abrirEditorQuestao(id) {
-    const questao = questoesAtuais.find(q => q.id === id);
-    if (!questao) return;
-
-    idQuestaoSendoEditada = id;
-    document.getElementById('edit-id').value = id;
-    document.getElementById('edit-enunciado').value = questao.enunciado;
-    document.getElementById('edit-comentario').value = questao.comentario || "";
-    document.getElementById('edit-materia').value = questao.materia || "";
-    document.getElementById('edit-assunto').value = questao.assunto || "";
-    document.getElementById('edit-fonte').value = questao.fonte || "";
-    document.getElementById('edit-gabarito').value = questao.gabarito || "";
-
-    document.getElementById('modal-editor').classList.add('active');
-}
-
-function fecharEditor() {
-    document.getElementById('modal-editor').classList.remove('active');
-}
-
-async function salvarEdicaoCompleta() {
-    const id = idQuestaoSendoEditada;
-    const dados = {
-        enunciado: document.getElementById('edit-enunciado').value,
-        comentario: document.getElementById('edit-comentario').value,
-        materia: document.getElementById('edit-materia').value,
-        assunto: document.getElementById('edit-assunto').value,
-        fonte: document.getElementById('edit-fonte').value,
-        gabarito: document.getElementById('edit-gabarito').value.toLowerCase()
-    };
-
-    updateSyncUI('syncing');
-    const { error } = await supabaseClient.from('questoes').update(dados).eq('id', id);
-
-    if (error) {
-        alert("Erro: " + error.message);
-        updateSyncUI('offline');
-    } else {
-        updateSyncUI('synced');
-        fecharEditor();
-        const index = questoesAtuais.findIndex(q => q.id == id);
-        if (index !== -1) {
-            questoesAtuais[index] = { ...questoesAtuais[index], ...dados };
-            const el = document.getElementById(`enunciado-${id}`);
-            if (el) el.innerHTML = dados.enunciado;
-        }
-        alert("Salvo com sucesso!");
-    }
-}
-
-/* --- 6. AUTENTICAÇÃO E UTILITÁRIOS --- */
-function toggleAuthModal() { document.getElementById('auth-modal').classList.toggle('active'); }
-function closeAuthModal() { document.getElementById('auth-modal').classList.remove('active'); }
-function openAuthModal() { document.getElementById("auth-modal").classList.remove("hidden"); }
 
 async function handleAuth() {
-    const email = document.getElementById('auth-email').value;
+    const email    = document.getElementById('auth-email').value;
     const password = document.getElementById('auth-password').value;
-    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+    const fn = _authModeIsRegister
+        ? supabaseClient.auth.signUp({ email, password })
+        : supabaseClient.auth.signInWithPassword({ email, password });
+
+    const { error } = await fn;
     if (error) return alert(error.message);
     location.reload();
 }
 
+/* ─── 6. TEMA ────────────────────────────────────────────────────── */
 function toggleTheme() {
-    const html = document.documentElement;
+    const html  = document.documentElement;
     const theme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
     html.setAttribute('data-theme', theme);
     localStorage.setItem('donezo_theme', theme);
@@ -383,194 +156,50 @@ function updateThemeUI(theme) {
     if (text) text.innerText = theme === 'dark' ? 'Modo Claro' : 'Modo Escuro';
 }
 
-function toggleConfig() {
-    const panel = document.getElementById('config-panel');
-    panel.classList.toggle('collapsed');
-    document.getElementById('accordion-icon').innerText = panel.classList.contains('collapsed') ? '▼' : '▲';
-}
-
-let meuGrafico = null;
-let dadosResolucoes = [];
-
-async function updateDashboard() {
-    if (!currentSession) return;
-
-    // Buscar resoluções do usuário
-    const { data, error } = await supabaseClient
-        .from('resolucoes')
-        .select('*')
-        .eq('user_id', currentSession.user.id);
-
-    if (error) return;
-    dadosResolucoes = data;
-
-    const hoje = new Date().toISOString().split('T')[0];
-    const deHoje = data.filter(r => r.data === hoje);
-
-    // 1. Widgets do Dia
-    const totalHoje = deHoje.length;
-    const acertosHoje = deHoje.filter(r => r.acertou).length;
-    const xpHoje = deHoje.reduce((acc, r) => acc + r.xp_ganho, 0);
-
-    document.getElementById('stat-total-q').innerText = totalHoje;
-    document.getElementById('stat-accuracy').innerText = totalHoje > 0 ? Math.round((acertosHoje/totalHoje)*100) + "%" : "0%";
-    document.getElementById('stat-xp').innerText = xpHoje;
-    document.getElementById('stat-flash').innerText = db.flashcards || 0;
-
-    // 2. Renderizar Gráfico e Ranking
-    renderizarGraficoSemanal(data);
-    renderizarRanking();
-}
-
-function renderizarGraficoSemanal(data) {
-    const ctx = document.getElementById('chartSemanal').getContext('2d');
-    const diasLabels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-    
-    // Identificar a Segunda-Feira da semana atual
-    const hoje = new Date();
-    const diaDaSemana = hoje.getDay(); // 0 (Dom) a 6 (Sáb)
-    const diffParaSegunda = hoje.getDate() - diaDaSemana + (diaDaSemana === 0 ? -6 : 1);
-    const segundaFeira = new Date(hoje.setDate(diffParaSegunda));
-    segundaFeira.setHours(0, 0, 0, 0);
-
-    const acertosData = [0, 0, 0, 0, 0, 0, 0];
-    const errosData = [0, 0, 0, 0, 0, 0, 0];
-
-    // Mapear dados do banco para os índices do gráfico (0=Seg, 6=Dom)
-    data.forEach(res => {
-        const dataRes = new Date(res.data + "T00:00:00");
-        if (dataRes >= segundaFeira) {
-            const diffDias = Math.floor((dataRes - segundaFeira) / (1000 * 60 * 60 * 24));
-            if (diffDias >= 0 && diffDias < 7) {
-                if (res.acertou) acertosData[diffDias]++;
-                else errosData[diffDias]++;
-            }
-        }
-    });
-
-    if (meuGrafico) meuGrafico.destroy();
-    meuGrafico = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: diasLabels,
-            datasets: [
-                { 
-                    label: 'Acertos', 
-                    data: acertosData, 
-                    borderColor: '#25614D', 
-                    backgroundColor: 'rgba(37, 97, 77, 0.1)',
-                    fill: true,
-                    tension: 0.4 
-                },
-                { 
-                    label: 'Erros', 
-                    data: errosData, 
-                    borderColor: '#e74c3c', 
-                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
-                    fill: true,
-                    tension: 0.4 
-                }
-            ]
-        },
-        options: { 
-            responsive: true, 
-            maintainAspectRatio: false, // IMPORTANTE: Mantém a altura dentro do container
-            resizeDelay: 200, // Evita cálculos excessivos durante redimensionamento
-            plugins: { 
-                legend: { display: false } 
-            },
-            scales: { 
-                y: { 
-                    beginAtZero: true, 
-                    suggestedMax: 10, // Define um topo inicial para o gráfico não ficar achatado
-                    ticks: { stepSize: 1 } 
-                } 
-            }
-        }
-    });
-}
-
-function renderizarRanking() {
-    const periodo = document.getElementById('rank-periodo').value;
-    const lista = document.getElementById('ranking-list');
-    if (!lista) return;
-
-    let dadosFiltrados = dadosResolucoes;
-
-    if (periodo === 'semana') {
-        const hoje = new Date();
-        const diaDaSemana = hoje.getDay();
-        const diffParaSegunda = hoje.getDate() - diaDaSemana + (diaDaSemana === 0 ? -6 : 1);
-        const segundaFeira = new Date(hoje.setDate(diffParaSegunda));
-        segundaFeira.setHours(0, 0, 0, 0);
-
-        dadosFiltrados = dadosResolucoes.filter(r => new Date(r.data + "T00:00:00") >= segundaFeira);
-    }
-
-    const stats = dadosFiltrados.reduce((acc, r) => {
-        if (!acc[r.materia]) acc[r.materia] = { q: 0, xp: 0 };
-        acc[r.materia].q++;
-        acc[r.materia].xp += (r.xp_ganho || 0);
-        return acc;
-    }, {});
-
-    const ordenado = Object.entries(stats)
-        .sort((a, b) => b[1].xp - a[1].xp) // Ordena por XP
-        .slice(0, 5);
-
-    lista.innerHTML = ordenado.length > 0 ? ordenado.map(([materia, info]) => `
-        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-card-alt); padding: 12px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.05);">
-            <div style="overflow: hidden;">
-                <div style="font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${materia}</div>
-                <div style="font-size: 11px; color: var(--text-muted);">${info.q} questões resolvidas</div>
-            </div>
-            <div style="text-align: right; min-width: 60px;">
-                <span style="color: #25614D; font-weight: 800; font-size: 14px;">${info.xp}</span>
-                <small style="font-size: 9px; color: var(--text-muted);">XP</small>
-            </div>
-        </div>
-    `).join('') : '<p style="font-size:12px; color:var(--text-muted); text-align:center;">Nenhuma atividade no período.</p>';
-}
-
+/* ─── 7. MENU ATIVO ──────────────────────────────────────────────── */
 function highlightActiveMenu() {
-    const page = window.location.pathname.split("/").pop() || "index.html";
+    const page = window.location.pathname.split('/').pop() || 'index.html';
     document.querySelectorAll('.menu-item').forEach(item => {
         if (item.getAttribute('href')?.includes(page)) item.classList.add('active');
     });
 }
 
-// === MENU HAMBÚRGUER MOBILE ===
-document.addEventListener('DOMContentLoaded', function () {
-    const menuToggle = document.querySelector('.mobile-menu-toggle');
+/* ─── 8. MENU HAMBÚRGUER MOBILE ──────────────────────────────────── */
+/* ─── 8. MENU HAMBÚRGUER MOBILE ──────────────────────────────────── */
+function _abrirMenuMobile(sidebar, overlay) {
+    sidebar.classList.add('active');
+    overlay.classList.add('active');
+    overlay.style.display = 'block';
+}
+
+function _fecharMenuMobile(sidebar, overlay) {
+    sidebar.classList.remove('active');
+    overlay.classList.remove('active');
+    overlay.style.display = 'none';
+}
+
+// Exposta globalmente para o onclick="" do HTML
+function toggleMobileMenu() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    if (!sidebar || !overlay) return;
+
+    sidebar.classList.contains('active')
+        ? _fecharMenuMobile(sidebar, overlay)
+        : _abrirMenuMobile(sidebar, overlay);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.querySelector('.sidebar-overlay');
 
-    function abrirMenu() {
-        sidebar.classList.add('active');
-        overlay.classList.add('active');
-        overlay.style.display = 'block';
-    }
-
-    function fecharMenu() {
-        sidebar.classList.remove('active');
-        overlay.classList.remove('active');
-        overlay.style.display = 'none';
-    }
-
-    if (menuToggle) {
-        menuToggle.addEventListener('click', function (e) {
-            e.stopPropagation();
-            sidebar.classList.contains('active') ? fecharMenu() : abrirMenu();
-        });
-    }
-
     if (overlay) {
-        overlay.addEventListener('click', fecharMenu);
+        overlay.addEventListener('click', () => _fecharMenuMobile(sidebar, overlay));
     }
 
     document.querySelectorAll('.menu-item').forEach(item => {
-        item.addEventListener('click', function () {
-            if (window.innerWidth <= 768) fecharMenu();
+        item.addEventListener('click', () => {
+            if (window.innerWidth <= 768) _fecharMenuMobile(sidebar, overlay);
         });
     });
 });
