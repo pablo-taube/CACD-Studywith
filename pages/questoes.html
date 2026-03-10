@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="../style/style.css" />
   </head>
   <body>
-    <button class="mobile-menu-toggle">
+    <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
       <span id="hamburger-icon">☰</span>
     </button>
 
@@ -82,6 +82,7 @@
         <h2 style="margin-bottom: 15px; font-size: 1.2rem">
           ✏️ Editar Questão
         </h2>
+
         <label style="font-size: 11px; color: var(--text-muted)"
           >ENUNCIADO (HTML)</label
         >
@@ -89,6 +90,7 @@
           id="edit-enunciado"
           style="height: 120px; width: 100%"
         ></textarea>
+
         <label
           style="
             font-size: 11px;
@@ -102,6 +104,7 @@
           id="edit-comentario"
           style="height: 80px; width: 100%"
         ></textarea>
+
         <div
           style="
             display: grid;
@@ -133,6 +136,7 @@
             />
           </div>
         </div>
+
         <div
           style="
             display: grid;
@@ -164,7 +168,9 @@
             />
           </div>
         </div>
+
         <input type="hidden" id="edit-id" />
+
         <div style="display: flex; gap: 10px; margin-top: 25px">
           <button
             onclick="salvarEdicaoCompleta()"
@@ -219,6 +225,7 @@
     <main class="main-content">
       <header class="topbar"></header>
       <h1 style="margin-bottom: 20px">Simulado Inteligente</h1>
+
       <div class="questoes-header-grid">
         <div class="config-panel collapsed" id="config-panel">
           <h2
@@ -233,11 +240,12 @@
           >
             Configurar Simulado <span id="accordion-icon">▼</span>
           </h2>
+
           <div id="config-content">
             <div
               style="
                 display: grid;
-                grid-template-columns: 1fr 1fr 110px;
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
                 gap: 10px;
                 margin-top: 15px;
               "
@@ -245,7 +253,7 @@
               <select
                 id="set-estilo"
                 class="opt-btn"
-                style="padding: 12px 15px; font-size: 0.95rem"
+                style="width: 100%; padding: 12px; font-size: 0.95rem"
               >
                 <option value="cespe">CESPE (C/E)</option>
                 <option value="fgv">FGV (A-E)</option>
@@ -254,7 +262,7 @@
               <select
                 id="set-status"
                 class="opt-btn"
-                style="padding: 12px 15px; font-size: 0.95rem"
+                style="width: 100%; padding: 12px; font-size: 0.95rem"
               >
                 <option value="todas">Todas as Questões</option>
                 <option value="nunca">Inéditas (Nunca resolvidas)</option>
@@ -264,16 +272,21 @@
               <input
                 type="number"
                 id="set-limite"
-                placeholder="Qtd."
+                placeholder="Qtd. questões"
                 class="opt-btn"
-                style="padding: 12px 15px; font-size: 0.95rem; min-width: 0"
+                style="
+                  width: 100%;
+                  padding: 12px;
+                  font-size: 0.95rem;
+                  min-width: 0;
+                "
               />
             </div>
 
             <div
               style="
                 display: grid;
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
                 gap: 10px;
                 margin-top: 10px;
               "
@@ -281,12 +294,12 @@
               <select
                 id="select-materia"
                 class="opt-btn"
-                style="padding: 12px 15px; font-size: 0.95rem"
+                style="width: 100%; padding: 12px; font-size: 0.95rem"
               >
                 <option value="">-- Carregando matérias... --</option>
               </select>
 
-              <div style="position: relative; min-width: 0">
+              <div style="position: relative; width: 100%; min-width: 0">
                 <input
                   type="text"
                   id="set-assunto"
@@ -295,9 +308,10 @@
                   placeholder="Digite ou selecione o assunto"
                   style="
                     width: 100%;
-                    padding: 12px 15px;
+                    padding: 12px;
                     font-size: 0.95rem;
                     min-width: 0;
+                    cursor: text;
                   "
                 />
                 <datalist id="assuntos-sugeridos"></datalist>
@@ -325,6 +339,7 @@
             </button>
           </div>
         </div>
+
         <div id="simulado-score-box" class="card-score-compact">
           <div class="score-data" style="width: 100%">
             <div class="score-main-val">
@@ -353,6 +368,7 @@
           </div>
         </div>
       </div>
+
       <div id="questions-render" class="questoes-lista-total"></div>
 
       <footer

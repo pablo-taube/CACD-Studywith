@@ -104,21 +104,33 @@ async function processQuestions() {
 async function gerarSimuladoGeral() {
     const estilo = document.getElementById('set-estilo').value;
     updateSyncUI('syncing');
-
     try {
-        const { data: materias, error: errMat } = await supabaseClient.from('lista_filtros').select('materia');
+        const { data: materias, error: errMat } = await supabaseClient
+            .from('lista_filtros')
+            .select('materia');
+
         if (errMat) throw errMat;
         if (!materias?.length) return alert('Nenhuma matéria cadastrada.');
 
         const resultados = await Promise.all(
-            materias.map(({ materia }) => 
+            materias.map(({ materia }) =>
                 supabaseClient.rpc('get_random_questions', {
                     p_materia: materia,
                     p_assunto: null,
+                    p_status: 'todas',
                     p_limite: SIM.POR_MATERIA,
                 })
             )
         );
+
+        // Detecta erros de RPC (ex: 404 — função não encontrada no Supabase)
+        const rpcError = resultados.find(res => res.error);
+        if (rpcError) {
+            console.error('Erro na RPC get_random_questions:', rpcError.error);
+            alert(`Erro ao buscar questões: ${rpcError.error.message || 'Função RPC não encontrada no Supabase.'}`);
+            updateSyncUI('offline');
+            return;
+        }
 
         const listaFinal = resultados
             .flatMap(res => res.data ?? [])
@@ -129,10 +141,8 @@ async function gerarSimuladoGeral() {
         questoesAtuais = listaFinal;
         acertosSimulado = 0;
         errosSimulado = 0;
-
         atualizarPlacarUI();
         if (UI.scoreTotal) UI.scoreTotal.innerText = questoesAtuais.length;
-
         renderizarSimulado(estilo);
         toggleConfig();
         updateSyncUI('synced');
@@ -140,7 +150,7 @@ async function gerarSimuladoGeral() {
         const relatorio = resultados
             .map((res, i) => ` • ${materias[i].materia}: ${res.data?.length ?? 0} questões`)
             .join('\n');
-        
+
         alert(`Simulado: ${questoesAtuais.length} questões\n\n${relatorio}`);
     } catch (err) {
         console.error('Erro no Simulado Geral:', err);
@@ -318,5 +328,9 @@ function updateTimerDisplay() {
 
 document.addEventListener('DOMContentLoaded', () => {
     carregarMateriasDisponiveis();
-    setTimeout(atualizarWidgetsProgresso, 1500);
+    setTimeout(() => {
+        if (typeof atualizarWidgetsProgresso === 'function') {
+            atualizarWidgetsProgresso();
+        }
+    }, 1500);
 });
