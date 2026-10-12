@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════════
    DIPLOMATIQUE — style.css (v2 · Cupertino + Glass sóbrio)
    Paleta: azuis pastéis · Tipografia: Inter · Temas: claro / escuro
-   Todos os seletores e nomes de classe anteriores foram mantidos..
+   Todos os seletores e nomes de classe anteriores foram mantidos.
    ═══════════════════════════════════════════════════════════════════ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -949,3 +949,132 @@ textarea:focus {
     border-color: var(--correct-border);
 }
 .auth-card .btn-primary:disabled { opacity: 0.6; cursor: default; }
+
+/* ─── 27. PÁGINA DE QUESTÕES: CAMPOS, CONFIGURAÇÃO, EDITOR, RODAPÉ ───
+   Substituem os estilos inline de pages/questoes.html.                */
+
+/* Campos de formulário (selects e inputs do painel de configuração) */
+.field {
+    width: 100%;
+    min-width: 0;
+    padding: 11px 14px;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--text-main);
+    background-color: var(--answer-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.field:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+    outline: none;
+}
+select.field {
+    appearance: none;
+    cursor: pointer;
+    padding-right: 34px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%2364748B' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+}
+.field-wrap { position: relative; min-width: 0; width: 100%; }
+
+/* Painel de configuração */
+.config-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    user-select: none;
+}
+.config-title #accordion-icon { font-size: 11px; color: var(--text-muted); }
+.config-grid { display: grid; gap: 10px; margin-top: 10px; }
+.config-grid--3 { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); margin-top: 16px; }
+.config-grid--2 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.config-actions { display: grid; gap: 10px; margin-top: 16px; }
+.config-actions .btn-primary,
+.config-actions .btn-secondary { width: 100%; }
+
+/* Botão secundário */
+.btn-secondary {
+    background: var(--hover-bg);
+    color: var(--text-main);
+    padding: 12px 24px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14.5px;
+    transition: background 0.2s, border-color 0.2s;
+}
+.btn-secondary:hover { background: var(--accent-soft); border-color: var(--accent); }
+
+/* Placar e timer (superfícies escuras: botões claros sobre vidro) */
+.score-data { width: 100%; }
+.score-divider { margin: 12px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.12); }
+.score-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+}
+.card-score-compact .btn-mini-reset,
+.timer-widget .btn-mini-reset {
+    margin-top: 0;
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+.card-score-compact .btn-mini-reset:hover { background: rgba(255, 255, 255, 0.22); }
+.timer-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    opacity: 0.7;
+}
+.timer-actions { display: flex; gap: 6px; }
+
+/* Editor de questão */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+#modal-editor textarea { margin: 0; }
+#edit-enunciado   { height: 140px; }
+#edit-comentario  { height: 90px; }
+.modal-actions { display: flex; gap: 10px; margin-top: 24px; }
+.modal-actions .btn-primary { flex: 1; width: auto; }
+
+/* Rodapé */
+.page-footer {
+    margin-top: auto;
+    padding: 20px 0 0;
+    border-top: 1px solid var(--border-color);
+}
+.page-footer-inner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+.page-footer-inner .push { margin-left: auto; }
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 25%, transparent);
+}
+
+@media (max-width: 768px) {
+    .config-grid--3, .config-grid--2 { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+    .form-row { grid-template-columns: 1fr; }
+}
