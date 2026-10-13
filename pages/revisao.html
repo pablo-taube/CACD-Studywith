@@ -1,149 +1,266 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Diplomatique | Revisão</title>
-    <link rel="icon" type="image/x-icon" href="../assets/embassy.png">
+    <link rel="icon" type="image/x-icon" href="../assets/embassy.png" />
 
     <!-- Aplica o tema salvo antes da renderização (evita "flash" de tema claro) -->
     <script>
-        document.documentElement.setAttribute('data-theme', localStorage.getItem('donezo_theme') || 'light');
+      document.documentElement.setAttribute(
+        "data-theme",
+        localStorage.getItem("donezo_theme") || "light",
+      );
     </script>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../style/style.css">
-</head>
-<body>
-
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../style/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  </head>
+  <body>
     <!-- Ícones (estilo traço, herdam a cor do texto) -->
-    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-        <defs>
-            <symbol id="i-dashboard" viewBox="0 0 24 24">
-                <rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/>
-                <rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>
-            </symbol>
-            <symbol id="i-book" viewBox="0 0 24 24">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-            </symbol>
-            <symbol id="i-layers" viewBox="0 0 24 24">
-                <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-                <polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>
-            </symbol>
-            <symbol id="i-file" viewBox="0 0 24 24">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/>
-            </symbol>
-            <symbol id="i-sliders" viewBox="0 0 24 24">
-                <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
-                <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
-                <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
-                <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>
-            </symbol>
-            <symbol id="i-trash" viewBox="0 0 24 24">
-                <polyline points="3 6 5 6 21 6"/>
-                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                <path d="M10 11v6"/><path d="M14 11v6"/>
-                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-            </symbol>
-            <symbol id="i-menu" viewBox="0 0 24 24">
-                <line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/>
-            </symbol>
-        </defs>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <symbol id="i-dashboard" viewBox="0 0 24 24">
+          <rect x="3" y="3" width="7" height="7" rx="2" />
+          <rect x="14" y="3" width="7" height="7" rx="2" />
+          <rect x="3" y="14" width="7" height="7" rx="2" />
+          <rect x="14" y="14" width="7" height="7" rx="2" />
+        </symbol>
+        <symbol id="i-book" viewBox="0 0 24 24">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+          <path
+            d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
+          />
+        </symbol>
+        <symbol id="i-layers" viewBox="0 0 24 24">
+          <polygon points="12 2 2 7 12 12 22 7 12 2" />
+          <polyline points="2 17 12 22 22 17" />
+          <polyline points="2 12 12 17 22 12" />
+        </symbol>
+        <symbol id="i-file" viewBox="0 0 24 24">
+          <path
+            d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+          />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="8" y1="13" x2="16" y2="13" />
+          <line x1="8" y1="17" x2="16" y2="17" />
+        </symbol>
+        <symbol id="i-trash" viewBox="0 0 24 24">
+          <polyline points="3 6 5 6 21 6" />
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+          <path d="M10 11v6" />
+          <path d="M14 11v6" />
+          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+        </symbol>
+        <symbol id="i-logout" viewBox="0 0 24 24">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+          <polyline points="16 17 21 12 16 7" />
+          <line x1="21" y1="12" x2="9" y2="12" />
+        </symbol>
+        <symbol id="i-menu" viewBox="0 0 24 24">
+          <line x1="4" y1="7" x2="20" y2="7" />
+          <line x1="4" y1="12" x2="20" y2="12" />
+          <line x1="4" y1="17" x2="20" y2="17" />
+        </symbol>
+      </defs>
     </svg>
 
     <!-- Modal de autenticação -->
-    <div id="auth-modal" class="auth-overlay" role="dialog" aria-modal="true" aria-labelledby="auth-title">
-        <div class="auth-card">
-            <div class="logo auth-logo">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                </svg>
-                Diplomatique
-            </div>
-
-            <h2 id="auth-title">Entrar na nuvem</h2>
-            <p class="auth-subtitle">Sincronize seu progresso entre dispositivos.</p>
-
-            <div class="auth-fields">
-                <input type="email" id="auth-email" class="auth-input" placeholder="E-mail" aria-label="E-mail" autocomplete="email">
-                <input type="password" id="auth-password" class="auth-input" placeholder="Senha" aria-label="Senha" autocomplete="current-password">
-            </div>
-
-            <button type="button" onclick="handleAuth()" class="btn-primary" id="auth-btn-main">Entrar</button>
-            <button type="button" onclick="toggleAuthMode()" class="auth-link" id="auth-toggle-text">Não tem conta? Cadastre-se</button>
-            <button type="button" onclick="closeAuthModal()" class="btn-mini-reset auth-offline">Continuar offline</button>
+    <div
+      id="auth-modal"
+      class="auth-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="auth-title"
+    >
+      <div class="auth-card">
+        <div class="logo auth-logo">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            />
+          </svg>
+          Diplomatique
         </div>
+
+        <h2 id="auth-title">Entrar na nuvem</h2>
+        <p class="auth-subtitle">
+          Sincronize seu progresso entre dispositivos.
+        </p>
+
+        <div class="auth-fields">
+          <input
+            type="email"
+            id="auth-email"
+            class="auth-input"
+            placeholder="E-mail"
+            aria-label="E-mail"
+            autocomplete="email"
+          />
+          <input
+            type="password"
+            id="auth-password"
+            class="auth-input"
+            placeholder="Senha"
+            aria-label="Senha"
+            autocomplete="current-password"
+          />
+        </div>
+
+        <button
+          type="button"
+          onclick="handleAuth()"
+          class="btn-primary"
+          id="auth-btn-main"
+        >
+          Entrar
+        </button>
+        <button
+          type="button"
+          onclick="toggleAuthMode()"
+          class="auth-link"
+          id="auth-toggle-text"
+        >
+          Não tem conta? Cadastre-se
+        </button>
+        <button
+          type="button"
+          onclick="closeAuthModal()"
+          class="btn-mini-reset auth-offline"
+        >
+          Continuar offline
+        </button>
+      </div>
     </div>
 
     <!-- Menu mobile -->
-    <button type="button" class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Abrir menu">
-        <span id="hamburger-icon"><svg class="menu-icon" aria-hidden="true"><use href="#i-menu"/></svg></span>
+    <button
+      type="button"
+      class="mobile-menu-toggle"
+      onclick="toggleMobileMenu()"
+      aria-label="Abrir menu"
+    >
+      <span id="hamburger-icon"
+        ><svg class="menu-icon" aria-hidden="true"><use href="#i-menu" /></svg
+      ></span>
     </button>
     <div class="sidebar-overlay" onclick="toggleMobileMenu()"></div>
 
     <!-- Barra lateral -->
     <aside class="sidebar" id="sidebar">
-        <div class="logo">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-            </svg>
-            Diplomatique
-        </div>
+      <div class="logo">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          />
+        </svg>
+        Diplomatique
+      </div>
 
-        <nav class="menu-group" aria-label="Principal">
-            <div class="menu-label">Menu</div>
-            <a href="../index.html" class="menu-item"><svg class="menu-icon" aria-hidden="true"><use href="#i-dashboard"/></svg>Dashboard</a>
-            <a href="revisao.html" class="menu-item active" aria-current="page"><svg class="menu-icon" aria-hidden="true"><use href="#i-book"/></svg>Revisão</a>
-            <a href="flashcards.html" class="menu-item"><svg class="menu-icon" aria-hidden="true"><use href="#i-layers"/></svg>Flashcards</a>
-            <a href="questoes.html" class="menu-item"><svg class="menu-icon" aria-hidden="true"><use href="#i-file"/></svg>Questões</a>
-        </nav>
+      <nav class="menu-group" aria-label="Principal">
+        <div class="menu-label">Menu</div>
+        <a href="../index.html" class="menu-item"
+          ><svg class="menu-icon" aria-hidden="true">
+            <use href="#i-dashboard" /></svg
+          >Dashboard</a
+        >
+        <a href="revisao.html" class="menu-item active" aria-current="page"
+          ><svg class="menu-icon" aria-hidden="true"><use href="#i-book" /></svg
+          >Revisão</a
+        >
+        <a href="flashcards.html" class="menu-item"
+          ><svg class="menu-icon" aria-hidden="true">
+            <use href="#i-layers" /></svg
+          >Flashcards</a
+        >
+        <a href="questoes.html" class="menu-item"
+          ><svg class="menu-icon" aria-hidden="true"><use href="#i-file" /></svg
+          >Questões</a
+        >
+      </nav>
 
-        <div class="menu-group menu-group-bottom">
-            <div class="menu-label">Geral</div>
-            <div class="menu-item"><svg class="menu-icon" aria-hidden="true"><use href="#i-sliders"/></svg>Configurações</div>
-            <div class="menu-item" onclick="clearData()"><svg class="menu-icon" aria-hidden="true"><use href="#i-trash"/></svg>Resetar banco</div>
-        </div>
-
-        <button type="button" class="theme-switch" onclick="toggleTheme()" id="theme-toggle">
-            <span id="theme-text">Modo Escuro</span>
-            <span class="theme-icon" id="theme-icon">🌙</span>
+      <div class="menu-group menu-group-bottom">
+        <div class="menu-label">Geral</div>
+        <button type="button" class="menu-item" onclick="clearData()">
+          <svg class="menu-icon" aria-hidden="true"><use href="#i-trash" /></svg
+          >Resetar banco
         </button>
+        <button type="button" class="menu-item" onclick="logout()">
+          <svg class="menu-icon" aria-hidden="true">
+            <use href="#i-logout" /></svg
+          >Sair da conta
+        </button>
+      </div>
+
+      <div id="sync-indicator" class="sync-status offline">
+        <span id="sync-icon">☁️</span> <span id="sync-text">Offline</span>
+      </div>
+
+      <button
+        type="button"
+        class="theme-switch"
+        onclick="toggleTheme()"
+        id="theme-toggle"
+      >
+        <span id="theme-text">Modo Escuro</span>
+        <span class="theme-icon" id="theme-icon">🌙</span>
+      </button>
     </aside>
 
     <!-- Conteúdo principal -->
     <main class="main-content">
-        <h1>Área de revisão</h1>
+      <h1>Área de revisão</h1>
 
-        <div class="page-narrow">
-            <div class="config-panel">
-                <textarea id="revisao-input" class="code-input" aria-label="HTML do conteúdo de revisão"
-                          placeholder="Cole aqui o HTML do conteúdo de revisão…"></textarea>
-                <div class="panel-actions">
-                    <button type="button" class="btn-primary" onclick="renderGeneric('revisao-input', 'revisao-out')">Renderizar conteúdo</button>
-                </div>
-            </div>
-
-            <div id="revisao-out" class="q-container reading-content"></div>
+      <div class="page-narrow">
+        <div class="config-panel">
+          <textarea
+            id="revisao-input"
+            class="code-input"
+            aria-label="HTML do conteúdo de revisão"
+            placeholder="Cole aqui o HTML do conteúdo de revisão…"
+          ></textarea>
+          <div class="panel-actions">
+            <button
+              type="button"
+              class="btn-primary"
+              onclick="renderGeneric('revisao-input', 'revisao-out')"
+            >
+              Renderizar conteúdo
+            </button>
+          </div>
         </div>
-    </main>
 
-    <script src="../js/script.js"></script>
-    <script>
-        /* Menu mobile: só define a função se o script da página ainda não a tiver definido */
-        if (typeof window.toggleMobileMenu !== 'function') {
-            window.toggleMobileMenu = function () {
-                const sidebar = document.querySelector('.sidebar');
-                const overlay = document.querySelector('.sidebar-overlay');
-                if (!sidebar || !overlay) return;
-                const open = sidebar.classList.toggle('active');
-                overlay.classList.toggle('active', open);
-                overlay.style.display = open ? 'block' : 'none';
-            };
-        }
-    </script>
-</body>
+        <div id="revisao-out" class="q-container reading-content"></div>
+      </div>
+    </main>
+    <script src="../js/core.js"></script>
+    <script src="../js/app.js"></script>
+  </body>
 </html>
