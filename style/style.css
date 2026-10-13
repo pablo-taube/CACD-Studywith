@@ -403,6 +403,15 @@ body {
     color: var(--accent-color) !important;
     transition: 0.2s;
 }
+.q-container button[onclick^="abrirEditorQuestao"] {
+    z-index: 10;
+    position: relative;
+    color: var(--accent-color) !important;
+}
+.q-container button[onclick^="abrirEditorQuestao"]:hover {
+    background-color: var(--accent-soft) !important;
+}
+
 /* ─── 11. ALTERNATIVAS ───────────────────────────────────────────── */
 .options-grid {
     display: grid;
@@ -775,6 +784,10 @@ textarea:focus {
     .config-panel {
         width: 100%;
         padding: 16px;
+    }
+    #config-content div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+        gap: 10px;
     }
     .stats-grid {
         grid-template-columns: 1fr 1fr;
@@ -1435,15 +1448,3 @@ body {
         background-color: var(--sidebar-solid);
     }
 }
-
-/* ─── 32. MODAL DE CONFIRMAÇÃO ───────────────────────────────────── */
-.confirm-card { max-width: 400px; }
-.confirm-text {
-    margin: 8px 0 22px;
-    font-size: 14px;
-    line-height: 1.6;
-    color: var(--text-muted);
-}
-.confirm-card .modal-actions > * { flex: 1; }
-.btn-danger { background: #B85F5F; }
-.btn-danger:hover { filter: brightness(1.08); }
