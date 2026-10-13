@@ -1,80 +1,266 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Diplomatique | Revisão</title>
-    <link rel="stylesheet" href="../style/style.css">
-      <link rel="icon" type="image/x-icon" href="../assets/embassy.png">
+    <link rel="icon" type="image/x-icon" href="../assets/embassy.png" />
 
-</head>
-<body>
-    <div id="auth-modal" class="auth-overlay">
-    <div class="auth-card">
-        <div class="logo" style="justify-content: center; margin-bottom: 20px;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="10" stroke="#25614D" stroke-width="4"/>
-            </svg>
-            Diplomatique
+    <!-- Aplica o tema salvo antes da renderização (evita "flash" de tema claro) -->
+    <script>
+      document.documentElement.setAttribute(
+        "data-theme",
+        localStorage.getItem("donezo_theme") || "light",
+      );
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../style/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  </head>
+  <body>
+    <!-- Ícones (estilo traço, herdam a cor do texto) -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <symbol id="i-dashboard" viewBox="0 0 24 24">
+          <rect x="3" y="3" width="7" height="7" rx="2" />
+          <rect x="14" y="3" width="7" height="7" rx="2" />
+          <rect x="3" y="14" width="7" height="7" rx="2" />
+          <rect x="14" y="14" width="7" height="7" rx="2" />
+        </symbol>
+        <symbol id="i-book" viewBox="0 0 24 24">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+          <path
+            d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
+          />
+        </symbol>
+        <symbol id="i-layers" viewBox="0 0 24 24">
+          <polygon points="12 2 2 7 12 12 22 7 12 2" />
+          <polyline points="2 17 12 22 22 17" />
+          <polyline points="2 12 12 17 22 12" />
+        </symbol>
+        <symbol id="i-file" viewBox="0 0 24 24">
+          <path
+            d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+          />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="8" y1="13" x2="16" y2="13" />
+          <line x1="8" y1="17" x2="16" y2="17" />
+        </symbol>
+        <symbol id="i-trash" viewBox="0 0 24 24">
+          <polyline points="3 6 5 6 21 6" />
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+          <path d="M10 11v6" />
+          <path d="M14 11v6" />
+          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+        </symbol>
+        <symbol id="i-logout" viewBox="0 0 24 24">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+          <polyline points="16 17 21 12 16 7" />
+          <line x1="21" y1="12" x2="9" y2="12" />
+        </symbol>
+        <symbol id="i-menu" viewBox="0 0 24 24">
+          <line x1="4" y1="7" x2="20" y2="7" />
+          <line x1="4" y1="12" x2="20" y2="12" />
+          <line x1="4" y1="17" x2="20" y2="17" />
+        </symbol>
+      </defs>
+    </svg>
+
+    <!-- Modal de autenticação -->
+    <div
+      id="auth-modal"
+      class="auth-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="auth-title"
+    >
+      <div class="auth-card">
+        <div class="logo auth-logo">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            />
+          </svg>
+          Diplomatique
         </div>
-        <h2 id="auth-title">Entrar na Nuvem</h2>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Sincronize seu progresso entre dispositivos.</p>
-        
-        <input type="email" id="auth-email" placeholder="Seu e-mail" class="opt-btn" style="width: 100%; margin-bottom: 10px; padding: 12px;">
-        <input type="password" id="auth-password" placeholder="Sua senha" class="opt-btn" style="width: 100%; margin-bottom: 20px; padding: 12px;">
-        
-        <button onclick="handleAuth()" class="btn-primary" style="width: 100%; padding: 14px; margin-bottom: 10px;" id="auth-btn-main">Entrar</button>
-        <p style="font-size: 12px; cursor: pointer; color: var(--accent);" onclick="toggleAuthMode()" id="auth-toggle-text">Não tem conta? Cadastre-se</p>
-        
-        <button onclick="closeAuthModal()" class="btn-mini-reset" style="margin-top: 15px; background: transparent; color: var(--text-muted);">Continuar Offline</button>
+
+        <h2 id="auth-title">Entrar na nuvem</h2>
+        <p class="auth-subtitle">
+          Sincronize seu progresso entre dispositivos.
+        </p>
+
+        <div class="auth-fields">
+          <input
+            type="email"
+            id="auth-email"
+            class="auth-input"
+            placeholder="E-mail"
+            aria-label="E-mail"
+            autocomplete="email"
+          />
+          <input
+            type="password"
+            id="auth-password"
+            class="auth-input"
+            placeholder="Senha"
+            aria-label="Senha"
+            autocomplete="current-password"
+          />
+        </div>
+
+        <button
+          type="button"
+          onclick="handleAuth()"
+          class="btn-primary"
+          id="auth-btn-main"
+        >
+          Entrar
+        </button>
+        <button
+          type="button"
+          onclick="toggleAuthMode()"
+          class="auth-link"
+          id="auth-toggle-text"
+        >
+          Não tem conta? Cadastre-se
+        </button>
+        <button
+          type="button"
+          onclick="closeAuthModal()"
+          class="btn-mini-reset auth-offline"
+        >
+          Continuar offline
+        </button>
+      </div>
     </div>
-</div>
-    <aside class="sidebar">
-    <div class="logo">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="10" stroke="#25614D" stroke-width="4"/>
+
+    <!-- Menu mobile -->
+    <button
+      type="button"
+      class="mobile-menu-toggle"
+      onclick="toggleMobileMenu()"
+      aria-label="Abrir menu"
+    >
+      <span id="hamburger-icon"
+        ><svg class="menu-icon" aria-hidden="true"><use href="#i-menu" /></svg
+      ></span>
+    </button>
+    <div class="sidebar-overlay" onclick="toggleMobileMenu()"></div>
+
+    <!-- Barra lateral -->
+    <aside class="sidebar" id="sidebar">
+      <div class="logo">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          />
         </svg>
         Diplomatique
-    </div>
-    
-    <div class="menu-group">
-        <div class="menu-label">Menu</div>
-        <a href="../index.html" class="menu-item active">📊 Dashboard</a>
-        <a href="revisao.html" class="menu-item">📘 Revisão</a>
-        <a href="flashcards.html" class="menu-item">🧠 Flashcards</a>
-        <a href="questoes.html" class="menu-item">📝 Questões</a>
-    </div>
+      </div>
 
-    <div class="menu-group" style="margin-top:auto">
-        <div class="menu-label">General</div>
-        <div class="menu-item">⚙️ Settings</div>
-        <div class="menu-item" onclick="clearData()">🧹 Resetar Banco</div>
-    </div>
-    <button class="theme-switch" onclick="toggleTheme()" id="theme-toggle">
-    <span id="theme-text">Modo Escuro</span>
-    <div class="theme-icon" id="theme-icon">🌙</div>
-</button>
-</aside>
+      <nav class="menu-group" aria-label="Principal">
+        <div class="menu-label">Menu</div>
+        <a href="../index.html" class="menu-item"
+          ><svg class="menu-icon" aria-hidden="true">
+            <use href="#i-dashboard" /></svg
+          >Dashboard</a
+        >
+        <a href="revisao.html" class="menu-item active" aria-current="page"
+          ><svg class="menu-icon" aria-hidden="true"><use href="#i-book" /></svg
+          >Revisão</a
+        >
+        <a href="flashcards.html" class="menu-item"
+          ><svg class="menu-icon" aria-hidden="true">
+            <use href="#i-layers" /></svg
+          >Flashcards</a
+        >
+        <a href="questoes.html" class="menu-item"
+          ><svg class="menu-icon" aria-hidden="true"><use href="#i-file" /></svg
+          >Questões</a
+        >
+      </nav>
+
+      <div class="menu-group menu-group-bottom">
+        <div class="menu-label">Geral</div>
+        <button type="button" class="menu-item" onclick="clearData()">
+          <svg class="menu-icon" aria-hidden="true"><use href="#i-trash" /></svg
+          >Resetar banco
+        </button>
+        <button type="button" class="menu-item" onclick="logout()">
+          <svg class="menu-icon" aria-hidden="true">
+            <use href="#i-logout" /></svg
+          >Sair da conta
+        </button>
+      </div>
+
+      <div id="sync-indicator" class="sync-status offline">
+        <span id="sync-icon">☁️</span> <span id="sync-text">Offline</span>
+      </div>
+
+      <button
+        type="button"
+        class="theme-switch"
+        onclick="toggleTheme()"
+        id="theme-toggle"
+      >
+        <span id="theme-text">Modo Escuro</span>
+        <span class="theme-icon" id="theme-icon">🌙</span>
+      </button>
+    </aside>
+
+    <!-- Conteúdo principal -->
     <main class="main-content">
-        <header class="topbar">
-            <div class="search-bar">
-                <input type="text" placeholder="Pesquisar tarefas ou métricas... (⌘F)">
-            </div>
-            <div class="user-info">
-                <div class="user-text">
-                    <p class="user-name">Michael Scott</p>
-                    <p class="user-plan">Premium Plan</p>
-                </div>
-                <img src="https://ui-avatars.com/api/?name=Michael+Scott&background=25614D&color=fff" class="avatar">
-            </div>
-        </header>
-        <h1>Área de Revisão</h1>
+      <h1>Área de revisão</h1>
+
+      <div class="page-narrow">
         <div class="config-panel">
-            <textarea id="revisao-input" placeholder="Cole seu HTML de revisão aqui..."></textarea>
-            <button class="btn-primary" onclick="renderGeneric('revisao-input', 'revisao-out')">Renderizar Conteúdo</button>
+          <textarea
+            id="revisao-input"
+            class="code-input"
+            aria-label="HTML do conteúdo de revisão"
+            placeholder="Cole aqui o HTML do conteúdo de revisão…"
+          ></textarea>
+          <div class="panel-actions">
+            <button
+              type="button"
+              class="btn-primary"
+              onclick="renderGeneric('revisao-input', 'revisao-out')"
+            >
+              Renderizar conteúdo
+            </button>
+          </div>
         </div>
-        <div id="revisao-out" class="q-container"></div>
-        
+
+        <div id="revisao-out" class="q-container reading-content"></div>
+      </div>
     </main>
-    <script src="../js/script.js"></script>
-</body>
+    <script src="../js/core.js"></script>
+    <script src="../js/app.js"></script>
+  </body>
 </html>
