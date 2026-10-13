@@ -2,7 +2,7 @@
    DIPLOMATIQUE — core.js
    Infraestrutura compartilhada por TODAS as páginas.
    Substitui: supabase-config.js, auth.js e script.js.
-   Carregar antes de app.js e depois da biblioteca do Supabase.
+   Carregar antes de app.js e depois da biblioteca do Supabase
    ═══════════════════════════════════════════════════════════════════ */
 (() => {
     'use strict';
