@@ -303,40 +303,63 @@ body {
 }
 .config-panel.collapsed > *:not(h2) { display: none !important; }
 
-/* ─── 9. WIDGET SCORE COMPACTO ───────────────────────────────────── */
+/* ─── 9. PLACAR (SIMULADO) ───────────────────────────────────────── */
 .card-score-compact {
     background: var(--dark-glass) !important;
     -webkit-backdrop-filter: var(--glass-blur);
     backdrop-filter: var(--glass-blur);
     color: #fff;
-    padding: 20px;
+    padding: 18px 22px 20px;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
     border: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: left;
+}
+.score-data { width: 100%; }
+.score-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+.score-label {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: rgba(255, 255, 255, 0.65);
 }
 .score-main-val {
-    font-size: 30px;
+    font-size: 40px;
     font-weight: 600;
     color: var(--score-ok);
     font-variant-numeric: tabular-nums;
-    letter-spacing: -0.02em;
-    line-height: 1;
-    margin-bottom: 6px;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
 }
-.score-main-val small { font-size: 15px; color: rgba(255, 255, 255, 0.5); }
-.score-details p {
-    font-size: 11px;
-    opacity: 0.75;
-    letter-spacing: 0.02em;
-    margin-bottom: 4px;
+.score-main-val small {
+    margin-left: 4px;
+    font-size: 17px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.5);
+}
+.score-divider { margin: 14px 0 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.12); }
+.score-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.65);
+}
+.score-footer strong {
+    margin-left: 4px;
+    font-weight: 600;
     color: #fff;
+    font-variant-numeric: tabular-nums;
 }
-#score-erros { color: var(--score-bad); font-weight: 600; }
+.score-footer #score-erros { color: var(--score-bad); }
 
 /* ─── 10. CONTAINER DE QUESTÃO ───────────────────────────────────── */
 .q-container {
@@ -998,7 +1021,7 @@ select.field {
 .config-grid { display: grid; gap: 10px; margin-top: 10px; }
 .config-grid--3 { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); margin-top: 16px; }
 .config-grid--2 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
-.config-actions { display: grid; gap: 10px; margin-top: 16px; }
+.config-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
 .config-actions .btn-primary,
 .config-actions .btn-secondary { width: 100%; }
 
@@ -1016,19 +1039,11 @@ select.field {
 }
 .btn-secondary:hover { background: var(--accent-soft); border-color: var(--accent); }
 
-/* Placar e timer (superfícies escuras: botões claros sobre vidro) */
-.score-data { width: 100%; }
-.score-divider { margin: 12px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.12); }
-.score-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.8);
-}
+/* Botões e rótulos sobre superfícies escuras (placar e timer) */
 .card-score-compact .btn-mini-reset,
 .timer-widget .btn-mini-reset {
     margin-top: 0;
+    padding: 4px 12px;
     background: rgba(255, 255, 255, 0.12);
     border-color: rgba(255, 255, 255, 0.12);
     color: #fff;
@@ -1040,7 +1055,7 @@ select.field {
     letter-spacing: 0.04em;
     opacity: 0.7;
 }
-.timer-actions { display: flex; gap: 6px; }
+.timer-actions { display: flex; gap: 8px; }
 
 /* Editor de questão */
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -1050,20 +1065,35 @@ select.field {
 .modal-actions { display: flex; gap: 10px; margin-top: 24px; }
 .modal-actions .btn-primary { flex: 1; width: auto; }
 
-/* Rodapé */
-.page-footer {
-    margin-top: auto;
-    padding: 20px 0 0;
-    border-top: 1px solid var(--border-color);
-}
-.page-footer-inner {
+/* Cabeçalho de página com chip de status */
+.page-header {
     display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+    margin-bottom: 28px;
+}
+.page-header h1 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+}
+.status-chip {
+    display: inline-flex;
     align-items: center;
     gap: 10px;
+    padding: 7px 14px;
     font-size: 12px;
     color: var(--text-muted);
+    background: var(--white);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
 }
-.page-footer-inner .push { margin-left: auto; }
+.status-chip strong { font-weight: 600; color: var(--text-main); }
+.status-chip .sep { width: 1px; height: 12px; background: var(--border-color); }
 .status-dot {
     width: 8px;
     height: 8px;
@@ -1168,4 +1198,253 @@ select.field {
     color: inherit;
     background: color-mix(in srgb, var(--accent) 25%, transparent);
     border-radius: 4px;
+}
+
+/* ─── 29. ROTULOS DE CAMPO, ITENS-BOTÃO DO MENU, AJUSTES MOBILE ──── */
+.field-group { min-width: 0; }
+.field-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+button.menu-item {
+    width: 100%;
+    background: none;
+    border: none;
+    font: inherit;
+    font-size: 14.5px;
+    font-weight: 500;
+    text-align: left;
+}
+@media (max-width: 768px) {
+    .page-header h1 { font-size: 1.5rem; }
+    .config-actions { grid-template-columns: 1fr; }
+}
+
+/* ─── 30. QUESTÕES RENDERIZADAS, RANKING, AVISOS (TOAST) ─────────── */
+
+/* Cabeçalho do cartão de questão */
+.q-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+.q-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+}
+.q-number { font-weight: 600; color: var(--accent-color); }
+.q-banca::before { content: '·'; margin-right: 8px; }
+
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.btn-icon .menu-icon { width: 15px; height: 15px; }
+.btn-icon:hover { background: var(--accent-soft); border-color: var(--accent); }
+
+/* Alternativas: Certo/Errado lado a lado; A–E em uma linha */
+.options-grid--cespe { grid-template-columns: 1fr 1fr; }
+.options-grid--fgv   { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.options-grid--cespe .opt-btn,
+.options-grid--fgv .opt-btn { text-align: center; }
+
+/* Comentário */
+.comentario-title {
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent-color);
+}
+
+/* Estado vazio da lista de questões */
+.questoes-lista-total:empty::before {
+    content: 'Configure e gere um simulado para começar.';
+    display: block;
+    padding: 48px 24px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-muted);
+    border: 1px dashed var(--border-color);
+    border-radius: var(--radius-lg);
+}
+
+/* Ranking de matérias */
+.ranking-list { gap: 16px; }
+.rank-item { display: flex; flex-direction: column; gap: 8px; }
+.rank-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    font-size: 13px;
+}
+.rank-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+.rank-pos {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-color);
+    background: var(--accent-soft);
+}
+.rank-meta {
+    flex-shrink: 0;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+.rank-bar {
+    height: 6px;
+    background: var(--hover-bg);
+    border-radius: 999px;
+    overflow: hidden;
+}
+.rank-bar span {
+    display: block;
+    height: 100%;
+    width: var(--w, 0);
+    background: var(--accent);
+    border-radius: 999px;
+    transition: width 0.5s ease;
+}
+.rank-empty { font-size: 13px; color: var(--text-muted); }
+
+/* Avisos (substituem alert()) */
+.toast-stack {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: min(380px, calc(100vw - 40px));
+}
+.toast {
+    padding: 12px 16px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    white-space: pre-line;
+    color: var(--text-main);
+    background: var(--sidebar-solid);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    animation: fadeIn 0.3s ease-out;
+}
+.toast--error   { background: var(--wrong-bg);   color: var(--wrong-text);   border-color: var(--wrong-border); }
+.toast--success { background: var(--correct-bg); color: var(--correct-text); border-color: var(--correct-border); }
+.toast--leaving { opacity: 0; transition: opacity 0.3s; }
+
+@media (max-width: 480px) {
+    .options-grid--fgv .opt-btn { padding: 12px 0; }
+}
+
+/* ─── 31. GLASSMORPHISM DISCRETO ─────────────────────────────────────
+   Camadas sutis sobre o que já existe: brilho de borda superior,
+   reflexo leve nas superfícies, modais translúcidos e três luzes de
+   fundo suaves para o vidro ter o que refletir.                        */
+:root {
+    --bg-glow-3:        rgba(190, 215, 240, 0.45);
+    --glass-highlight:  inset 0 1px 0 rgba(255, 255, 255, 0.65);
+    --glass-sheen:      linear-gradient(150deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 55%);
+    --shadow-glass:     var(--shadow-md), var(--glass-highlight);
+    --modal-bg:         rgba(250, 252, 255, 0.80);
+}
+[data-theme="dark"] {
+    --bg-glow-3:        rgba(70, 110, 160, 0.10);
+    --glass-highlight:  inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    --glass-sheen:      linear-gradient(150deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 55%);
+    --modal-bg:         rgba(20, 27, 37, 0.82);
+}
+
+body {
+    background:
+        radial-gradient(900px 520px at 6% -8%,   var(--bg-glow-1), transparent 62%),
+        radial-gradient(800px 520px at 100% 0%,  var(--bg-glow-2), transparent 62%),
+        radial-gradient(720px 500px at 40% 112%, var(--bg-glow-3), transparent 65%),
+        var(--app-bg);
+    background-attachment: fixed;
+}
+
+/* Superfícies: brilho de borda + reflexo suave */
+.card,
+.config-panel,
+.status-chip,
+.search-bar,
+.mobile-menu-toggle { box-shadow: var(--shadow-glass); }
+
+.card,
+.card.featured,
+.config-panel,
+.q-container { background-image: var(--glass-sheen); }
+
+/* Questões: dezenas de cartões na tela; sem desfoque para manter a rolagem fluida */
+.q-container {
+    box-shadow: var(--shadow-glass);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+
+/* Item ativo do menu com contorno translúcido */
+.menu-item.active {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* Modais e avisos translúcidos */
+.auth-card {
+    background: var(--modal-bg);
+    -webkit-backdrop-filter: blur(28px) saturate(170%);
+    backdrop-filter: blur(28px) saturate(170%);
+    box-shadow: 0 24px 60px rgba(15, 25, 38, 0.28), var(--glass-highlight);
+}
+.toast:not(.toast--error):not(.toast--success) {
+    background: var(--modal-bg);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    backdrop-filter: blur(20px) saturate(160%);
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        background: var(--modal-bg);
+        -webkit-backdrop-filter: blur(28px) saturate(170%);
+        backdrop-filter: blur(28px) saturate(170%);
+        box-shadow: 0 24px 60px rgba(15, 25, 38, 0.28), var(--glass-highlight);
+    }
+}
+
+/* Navegadores sem backdrop-filter: superfícies opacas para manter a leitura */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .sidebar, .card, .config-panel, .q-container, .status-chip, .auth-card, .toast {
+        background-color: var(--sidebar-solid);
+    }
 }
